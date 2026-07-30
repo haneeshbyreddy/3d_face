@@ -118,6 +118,18 @@ svg{display:block}
 .c-pane{fill:var(--panel)}
 .c-white{fill:#fff}
 
+/* the bust, drawn the way it is made: one cured layer at a time.
+   Each disc is filled with the body colour and stroked with the background,
+   so the stack reads as one solid object scored by its own print lines. */
+.bl{fill:var(--grey-2);stroke:var(--panel);stroke-width:.9;
+  stroke-opacity:var(--o,.30);vector-effect:non-scaling-stroke;
+  opacity:0;transform:translateY(5px)}
+.rv-in .bl{opacity:1;transform:none;
+  transition:opacity .40s ease var(--d,0s),transform .48s cubic-bezier(.22,.7,.25,1) var(--d,0s)}
+.bl-uv{fill:var(--uv);stroke:var(--uv-soft);stroke-opacity:.22}
+.bl-sh{fill:var(--line);opacity:0}          /* the shadow it casts on the shelf */
+.rv-in .bl-sh{transition:opacity .5s ease var(--d,0s);opacity:.5}
+
 /* chart entrance primitives */
 .drw{stroke-dasharray:var(--len,1200);stroke-dashoffset:var(--len,1200)}
 .rv-in .drw{transition:stroke-dashoffset 1.15s cubic-bezier(.22,.7,.25,1) .12s;stroke-dashoffset:0}
@@ -909,7 +921,7 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
     <div class="vgrid">
       <div class="vcell" style="--d:.20s">
         <span class="k">What we would sell</span>
-        <span class="v">130 mm bust</span>
+        <span class="v">130 mm <span class="gl" data-t="bust">bust</span></span>
         <span class="d">Painted resin, roughly coffee-mug height, at &#8377;2,500. Sits mid-market: Indian sellers list &#8377;1,599&ndash;5,999.</span>
       </div>
       <div class="vcell" style="--d:.32s">
@@ -944,10 +956,6 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
   <figure class="viz rv">
     <p class="viz-t">Four sizes drawn to true relative scale, against what each one earns per hour of hand-work</p>
     <div class="scroller"><svg class="ch" viewBox="0 0 700 392" role="img" aria-label="Earnings per hour of hand-work rise with size, plotted above four bust silhouettes drawn at true relative scale. The 130 millimetre option is highlighted.">
-      <defs>
-        <path id="bust" d="M -30 0 L -30 -18 C -30 -34 -18 -40 -12 -44 C -18 -52 -19 -62 -19 -70 C -19 -88 -8 -97 0 -97 C 8 -97 19 -88 19 -70 C 19 -62 18 -52 12 -44 C 18 -40 30 -34 30 -18 L 30 0 Z"/>
-      </defs>
-
       <rect class="c-band" x="326" y="6" width="110" height="326"/>
       <rect class="c-uv" x="326" y="6" width="110" height="2"/>
       <text class="t-s c-uvt" x="381" y="20" text-anchor="middle" letter-spacing="1.4">OUR SIZE</text>
@@ -967,12 +975,9 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
 
       <path class="c-ax" d="M40 330 H676" stroke-width="1.2"/>
 
-      <!-- busts at true relative scale, 0.85 px per mm.
-           .growy sits on an OUTER g so it cannot clobber the transform attribute. -->
-      <g class="growy" style="--d:.15s"><g transform="translate(110,330) scale(0.438)"><use href="#bust" class="c-fig"/></g></g>
-      <g class="growy" style="--d:.30s"><g transform="translate(245,330) scale(0.789)"><use href="#bust" class="c-fig"/></g></g>
-      <g class="growy" style="--d:.45s"><g transform="translate(381,330) scale(1.139)"><use href="#bust" class="c-uv"/></g></g>
-      <g class="growy" style="--d:.60s"><g transform="translate(575,330) scale(1.577)"><use href="#bust" class="c-fig"/></g></g>
+      <!-- the four busts, at true relative scale (0.85 px per mm), each built
+           from the same cross-sections as the hero head. Filled by script. -->
+      <g id="sizeBusts"></g>
 
       <g text-anchor="middle">
         <text class="c-ink" x="110" y="348">50 mm</text><text class="t-s c-mut" x="110" y="361">keychain</text>
@@ -1010,7 +1015,7 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
     <div class="ans-b">
       <p class="q">Which kind of 3D printer?</p>
       <h2>Resin. It prints <em>three faces in the time filament prints one</em>.</h2>
-      <p class="because">A printer builds an object one flat slice at a time. Filament <b>draws</b> each slice line by line, so two faces take twice as long. Resin <b>flashes</b> the whole slice at once with UV light. The plate is either full or it isn&rsquo;t, and time barely moves in between.</p>
+      <p class="because">A printer builds an object one flat slice at a time. <span class="gl" data-t="filament">Filament</span> <b>draws</b> each slice line by line, so two faces take twice as long. <span class="gl" data-t="resin">Resin</span> <b>flashes</b> the whole slice at once with UV light. The <span class="gl" data-t="plate">plate</span> is either full or it isn&rsquo;t, and time barely moves in between.</p>
     </div>
   </div>
 
@@ -1110,9 +1115,9 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
     <summary>Watch it work: three videos, plain language</summary>
     <div class="dbody">
       <p><a href="https://www.youtube.com/watch?v=UU6tWhV010M" target="_blank" rel="noopener">Resin printing, start to finish</a>. 24 min covering <span class="gl" data-t="slicing">slicing</span>, printing, washing, curing, supports and safety. The one to watch if you watch one.</p>
-      <p><a href="https://www.youtube.com/watch?v=i2O9SeNOCLA" target="_blank" rel="noopener">How a resin 3D printer works</a>. The vat, screen and lifting plate.</p>
+      <p><a href="https://www.youtube.com/watch?v=i2O9SeNOCLA" target="_blank" rel="noopener">How a resin 3D printer works</a>. The <span class="gl" data-t="vat">vat</span>, screen and lifting plate.</p>
       <p><a href="https://www.youtube.com/watch?v=CNdqu3C9UAk" target="_blank" rel="noopener">SLA, DLP and MSLA compared</a>. Why the affordable machines use an LCD screen.</p>
-      <p><strong>Assumptions.</strong> 130 mm hollow bust, 2 mm walls. Resin at 0.05 mm layers, about 2.5 s per layer on a modern <span class="gl" data-t="tilt">tilt-release</span> machine, two per Saturn-class plate. Filament at 0.16 mm layers on a fast machine, about six hours each. A 130 mm head sliced at 0.05 mm is 2,600 slices.</p>
+      <p><strong>Assumptions.</strong> 130 mm <span class="gl" data-t="hollow">hollow</span> bust, 2 mm walls. Resin at 0.05 mm layers, about 2.5 s per layer on a modern <span class="gl" data-t="tilt">tilt-release</span> machine, two per Saturn-class plate. Filament at 0.16 mm layers on a fast machine, about six hours each. A 130 mm head sliced at 0.05 mm is 2,600 slices.</p>
     </div>
   </details>
 </section>
@@ -1578,14 +1583,12 @@ var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: re
   });
 })();
 
-/* ─────────── HERO: the head, built layer by layer ───────────
-   Each print layer is a cross-section of a head, projected in 3/4 view.
-   Drawn top→bottom so lower discs correctly overlap the ones above,
-   but revealed bottom→top, the way the machine actually makes it.      */
-(function(){
-  var svg=document.getElementById("headSvg"), g=document.getElementById("headLayers");
-  if(!svg||!g) return;
-
+/* ─────────── THE BUST ───────────
+   One object, shared by the hero and the size chart, so the thing being
+   sized is visibly the same thing being printed. Each layer is a
+   cross-section of a head projected in 3/4 view; layers are returned
+   top→bottom so the lower discs correctly overlap the ones above.       */
+var BUST=(function(){
   /* [u, halfWidth, depth].  u = 0 at the crown, 1 at the cut base of the bust.
      Shoulders stay wide-but-shallow, otherwise they render as stacked saucers. */
   var P=[
@@ -1595,45 +1598,123 @@ var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: re
     [0.775,0.38,0.51],[0.815,0.35,0.46],[0.855,0.41,0.49],[0.895,0.55,0.53],
     [0.935,0.75,0.56],[0.970,0.90,0.58],[1.000,1.00,0.59]
   ];
+  /* Below the jaw the chart needs a real chest, not the hero's plinth: at
+     42 px tall, shoulders are the whole reason the thing reads as a person.
+     [v, front reach, back reach], picking up from the head at v = HEAD_END. */
+  var S=[
+    [0.520,0.666,0.607],[0.565,0.572,0.532],
+    [0.620,0.596,0.556],[0.665,0.672,0.632],
+    [0.720,0.808,0.778],[0.790,0.918,0.888],
+    [0.870,0.985,0.950],[1.000,1.030,0.990]
+  ];
+  /* the hero head, crown to just under the chin (u 0→0.74), occupies this much
+     of the shouldered bust — so v/SHRINK converts back to hero u. Taking over
+     above the hero's thin neck is what keeps the join from reading hourglass;
+     keeping the chest no deeper than the head is what keeps it off the chess board. */
+  var HEAD_END=0.520, SHRINK=HEAD_END/0.74;
+
   function cr(p0,p1,p2,p3,t){
     var t2=t*t,t3=t2*t;
     return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
   }
-  function prof(u,i){
+  function tbl(T,u,i){
     var k=0;
-    while(k<P.length-2 && P[k+1][0]<u) k++;
-    var a=P[Math.max(0,k-1)], b=P[k], c=P[Math.min(P.length-1,k+1)], d=P[Math.min(P.length-1,k+2)];
+    while(k<T.length-2 && T[k+1][0]<u) k++;
+    var a=T[Math.max(0,k-1)], b=T[k], c=T[Math.min(T.length-1,k+1)], d=T[Math.min(T.length-1,k+2)];
     var t=Math.max(0,Math.min(1,(u-b[0])/((c[0]-b[0])||1)));
     return Math.max(0.02, cr(a[i],b[i],c[i],d[i],t));
   }
+  function prof(u,i){ return tbl(P,u,i); }
   function gauss(u,c,s){ var d=(u-c)/s; return Math.exp(-d*d); }
   /* brow at .33, nose tip at .51, lips at .60, chin at .70 */
   function narrow(u){ return 0.38*gauss(u,0.51,0.055) + 0.09*gauss(u,0.60,0.032) + 0.13*gauss(u,0.70,0.045); }
   function wide(u){ return 0.07*gauss(u,0.33,0.060); }
   function occiput(u){ return 0.11*gauss(u,0.32,0.170); }
 
-  var N=48, cx=214, top=52, H=344, Sx=114, M=92;
-  var psi=-1.00, cp=Math.cos(psi), sp=Math.sin(psi), pitch=0.30;
+  var ASPECT=114/344;   /* half-width of the widest cross-section, over height */
 
-  for(var i=0;i<N;i++){
-    var u = 0.012 + (i/(N-1))*0.988;
-    var a = prof(u,1)*Sx, b = prof(u,2)*Sx, yb = top + u*H;
-    var fn = narrow(u)*Sx, fw = wide(u)*Sx, bb = occiput(u)*Sx;
-    var d="";
+  /* ── the hero's view: cross-sections turned three-quarters ── */
+  var PSI=-1.00, CP=Math.cos(PSI), SP=Math.sin(PSI), PITCH=0.30;
+  function ring(cx,top,H,u,M){
+    var Sx=H*ASPECT, yb=top+u*H;
+    var a=prof(u,1)*Sx, b=prof(u,2)*Sx;
+    var fn=narrow(u)*Sx, fw=wide(u)*Sx, bb=occiput(u)*Sx, d="";
     for(var k=0;k<=M;k++){
       var th=(k/M)*Math.PI*2, s=Math.sin(th), c2=Math.cos(th);
       var f=Math.max(0,s), bk=Math.max(0,-s);
       var x0=a*c2;
       var z0=b*s + fn*Math.pow(f,4.5) + fw*f*f - bb*bk*bk;
-      var xr =  x0*cp + z0*sp;
-      var zr = -x0*sp + z0*cp;
-      d += (k?"L":"M") + (cx+xr).toFixed(1) + " " + (yb + zr*pitch).toFixed(1);
+      var xr =  x0*CP + z0*SP;
+      var zr = -x0*SP + z0*CP;
+      d += (k?"L":"M") + (cx+xr).toFixed(1) + " " + (yb + zr*PITCH).toFixed(1);
     }
+    return d+"Z";
+  }
+  /* N layers, top→bottom, so the lower discs overlap the ones above. */
+  function layers(cx,top,H,N,M){
+    var out=[];
+    for(var i=0;i<N;i++){
+      var u=0.012 + (i/(N-1))*0.988;
+      out.push({d:ring(cx,top,H,u,M), u:u});
+    }
+    return out;
+  }
+
+  /* ── the chart's view: the same object, side on ──
+     Four objects side by side is a comparison of heights, and in profile the
+     brow, nose and chin still say "a person" at 42 px, where a three-quarter
+     view collapses into a vase. How far the object reaches forward (nose side)
+     and back (occiput side) of its centre line, at height v, in Sx units. */
+  function reach(v){
+    if(v<=HEAD_END){
+      var u=v/SHRINK, b=prof(u,2);
+      /* half the brow: at this size the full ridge turns the forehead into a beak */
+      return [b+narrow(u)+0.5*wide(u), b+occiput(u)];
+    }
+    return [tbl(S,v,1), tbl(S,v,2)];
+  }
+
+  /* One printed layer: the slab between two cross-sections. Stacked with a
+     hairline of background between them, they are the object AND its
+     print lines. Returned top→bottom. */
+  function slabs(cx,base,H,N){
+    var Sx=H*ASPECT*SHRINK, step=1/N, out=[];
+    for(var i=0;i<N;i++){
+      var v0=i*step, v1=(i+1)*step, d="", k, v, r;
+      for(k=0;k<=3;k++){                       /* down the face */
+        v=v0+(v1-v0)*(k/3); r=reach(v);
+        d += (k?"L":"M")+(cx-r[0]*Sx).toFixed(2)+" "+(base-(1-v)*H).toFixed(2);
+      }
+      for(k=3;k>=0;k--){                       /* and back up the skull */
+        v=v0+(v1-v0)*(k/3); r=reach(v);
+        d += "L"+(cx+r[1]*Sx).toFixed(2)+" "+(base-(1-v)*H).toFixed(2);
+      }
+      out.push({d:d+"Z", u:v1});
+    }
+    return out;
+  }
+  /* the footprint the object stands on, for the shadow it casts on the shelf */
+  function footprint(H){
+    var r=reach(1);
+    return (r[0]+r[1])/2 * H*ASPECT*SHRINK;
+  }
+
+  return {layers:layers, slabs:slabs, footprint:footprint};
+})();
+
+/* ─────────── HERO: the head, built layer by layer ───────────
+   Drawn top→bottom, but revealed bottom→top, the way the machine makes it. */
+(function(){
+  var svg=document.getElementById("headSvg"), g=document.getElementById("headLayers");
+  if(!svg||!g) return;
+
+  var L=BUST.layers(214,52,344,48,92);
+  for(var i=0;i<L.length;i++){
     var p=document.createElementNS(NS,"path");
-    p.setAttribute("d", d+"Z");
+    p.setAttribute("d", L[i].d);
     p.setAttribute("class","hl");
-    p.style.setProperty("--o", (0.95 - 0.42*Math.pow(u,1.30)).toFixed(3));
-    p.style.setProperty("--d", (0.06 + (1-u)*0.72).toFixed(3)+"s");
+    p.style.setProperty("--o", (0.95 - 0.42*Math.pow(L[i].u,1.30)).toFixed(3));
+    p.style.setProperty("--d", (0.06 + (1-L[i].u)*0.72).toFixed(3)+"s");
     g.appendChild(p);
   }
 
@@ -1644,6 +1725,39 @@ var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: re
   }
   if(reduce){ light(); }
   else { requestAnimationFrame(function(){ setTimeout(light,150); }); }
+})();
+
+/* ─────────── SIZE CHART: the same bust, four sizes ───────────
+   True relative scale at 0.85 px per mm. The layers are a constant real
+   thickness, so the big piece is not a bigger drawing — it is more layers. */
+(function(){
+  var g=document.getElementById("sizeBusts");
+  if(!g) return;
+
+  var PXMM=0.85, BASE=330, LAYER=4.0;   /* px per mm · shelf line · px per drawn layer */
+  var S=[ {x:110,mm:50,d:0.10}, {x:245,mm:90,d:0.26},
+          {x:381,mm:130,d:0.42,on:1}, {x:575,mm:180,d:0.60} ];
+
+  S.forEach(function(s){
+    var H=s.mm*PXMM, N=Math.max(11,Math.round(H/LAYER));
+    var L=BUST.slabs(s.x, BASE, H, N), w=BUST.footprint(H);
+
+    var sh=document.createElementNS(NS,"ellipse");
+    sh.setAttribute("cx",s.x.toFixed(1)); sh.setAttribute("cy",BASE.toFixed(1));
+    sh.setAttribute("rx",(w*1.30).toFixed(1)); sh.setAttribute("ry",(w*0.17).toFixed(1));
+    sh.setAttribute("class","bl-sh");
+    sh.style.setProperty("--d",(s.d+0.10).toFixed(2)+"s");
+    g.appendChild(sh);
+
+    for(var i=0;i<L.length;i++){
+      var p=document.createElementNS(NS,"path");
+      p.setAttribute("d", L[i].d);
+      p.setAttribute("class", s.on ? "bl bl-uv" : "bl");
+      /* revealed bottom→top, one bust after another */
+      p.style.setProperty("--d", (s.d + (1-L[i].u)*0.34).toFixed(3)+"s");
+      g.appendChild(p);
+    }
+  });
 })();
 
 /* ─────────── CUMULATIVE CASH staircase ─────────── */
@@ -1907,8 +2021,35 @@ var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: re
     ours:"Plaster powder. What the full-colour 3D-selfie firms actually print: colour running right through the piece, chalky to the touch, and brittle. Painted resin is a different object, not a cheaper version of this one."},
 
   sensitiser:{term:"Sensitiser",tag:"health",wiki:"Allergic contact dermatitis",
-    ours:"A substance your immune system learns to attack. The tenth exposure is worse than the first, and the reaction can arrive after years of handling it safely &mdash; so gloves matter from day one, not after the first rash."}
+    ours:"A substance your immune system learns to attack. The tenth exposure is worse than the first, and the reaction can arrive after years of handling it safely &mdash; so gloves matter from day one, not after the first rash."},
+
+  bust:{term:"Bust",tag:"sculpture",wiki:"Bust (sculpture)",
+    ours:"A portrait cut off at the shoulders rather than a whole figure. It is the oldest answer to the same problem we have: the face is what people want, and everything below it is cost. Ours is <b>130 mm</b> tall, about 57% of a real head."},
+
+  filament:{term:"Filament &middot; FDM",tag:"process",wiki:"Fused filament fabrication",
+    ours:"Plastic thread fed through a hot nozzle that <b>draws</b> each layer line by line, like icing a cake. Cheap and forgiving, but the time scales with how much you print, and it leaves horizontal ridges across a cheek."},
+
+  resin:{term:"Resin &middot; MSLA",tag:"process",wiki:"Vat photopolymerisation",
+    ours:"Liquid photopolymer that hardens where UV light touches it. The screen <b>flashes a whole layer at once</b>, so one face or two costs the same time. Smooth enough for skin, and toxic enough to need gloves."},
+
+  plate:{term:"Build plate",tag:"hardware",wiki:"3D printing",
+    ours:"The metal bed a print grows on, upside down, as it lifts out of the resin. Its size is the real constraint we are buying: the Saturn&rsquo;s takes <b>two</b> 130 mm busts, and a plateful is one overnight run whether it holds one piece or two."},
+
+  vat:{term:"Vat",tag:"hardware",
+    ours:"The shallow tank of liquid resin the print is pulled out of. Its floor is a clear film the UV shines through &mdash; a consumable that clouds and tears, and the part most likely to fail mid-print."},
+
+  hollow:{term:"Hollowing",tag:"modelling",
+    ours:"Emptying the inside of the model before printing, leaving a shell about <b>2 mm</b> thick. A solid 130 mm head would drink four times the resin and cure into a warped brick; the shell needs a drain hole so uncured liquid can escape."}
   };
+
+  /* the bust card gets the object itself, drawn from the same cross-sections
+     as the hero and the size chart */
+  G.bust.fig='<svg class="ch" viewBox="0 0 96 96" aria-hidden="true">'
+    + BUST.slabs(49,93,86,21).map(function(l){
+        return '<path class="c-fig" stroke="var(--panel)" stroke-width=".9" '
+             + 'stroke-opacity=".45" vector-effect="non-scaling-stroke" d="'+l.d+'"/>';
+      }).join('')
+    + '</svg>';
 
   var card=document.getElementById("glCard");
   var trigs=[].slice.call(document.querySelectorAll(".gl"));
