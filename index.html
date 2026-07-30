@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>3D printed faces: the decision in six answers</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%235B3FD1'/%3E%3Cg stroke='white' stroke-width='1.6' fill='none'%3E%3Cellipse cx='16' cy='11' rx='7' ry='2.2'/%3E%3Cellipse cx='16' cy='16' rx='7.6' ry='2.4'/%3E%3Cellipse cx='16' cy='21' rx='5.6' ry='2'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   TOKENS   ·   light = "paper"   ·   dark = "darkroom"
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#EDECE8;  --panel:#FBFAF7;  --panel-2:#E3E2DB;
+  --line:#DAD8D0;   --line-2:#BFBCB1;
+  --ink:#16161A;    --muted:#63635C;  --grey:#8E8D85;  --grey-2:#C4C2B9;
+
+  --uv:#5B3FD1;     --uv-ink:#432AB4; --uv-soft:#E9E4FB; --uv-line:#C6B8F2;
+  --amber:#C87C05;  --amber-ink:#8A5300; --amber-soft:#F7EBD5;
+  --red:#B4382A;    --green:#17795A;
+
+  /* the violet pane (ask + kicker) */
+  --pane:#5B3FD1;
+  --on-pane:#FFFFFF;
+  --on-pane-2:rgba(255,255,255,.90);
+  --on-pane-3:rgba(255,255,255,.62);
+  --on-pane-line:rgba(255,255,255,.28);
+  --on-pane-em:#D6C9FF;
+  --pane-sheen:rgba(255,255,255,.038);
+
+  --glow:transparent;
+  --shadow:0 1px 1px rgba(22,22,26,.03), 0 10px 26px -18px rgba(22,22,26,.30);
+  --shadow-lg:0 2px 3px rgba(22,22,26,.04), 0 26px 60px -34px rgba(22,22,26,.42);
+  --grid-a:rgba(22,22,26,.028);
+
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --disp:"Archivo",system-ui,"Segoe UI",sans-serif;
+  --text:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+
+  --sp:clamp(1.15rem,3.6vw,2.2rem);
+  --maxw:1080px;
+  color-scheme:light;
+}
+/* light ("paper") is the default regardless of the OS setting;
+   darkroom is opt-in through the toggle only */
+:root[data-theme="dark"]{
+  --paper:#0D0D10;  --panel:#15151A;  --panel-2:#1D1D24;
+  --line:#282830;   --line-2:#3B3B47;
+  --ink:#ECECF1;    --muted:#9C9CA6;  --grey:#6F6F7A;  --grey-2:#4A4A55;
+  --uv:#8B6BFF;     --uv-ink:#AC93FF; --uv-soft:#1C1633; --uv-line:#3C2F67;
+  --amber:#E6A33E;  --amber-ink:#F0BC6B; --amber-soft:#2B2113;
+  --red:#E7705C;    --green:#3EBF95;
+  --pane:#241B45;
+  --on-pane:#F4F1FF;
+  --on-pane-2:rgba(244,241,255,.84);
+  --on-pane-3:rgba(244,241,255,.56);
+  --on-pane-line:rgba(172,147,255,.28);
+  --on-pane-em:#BFA9FF;
+  --pane-sheen:rgba(172,147,255,.07);
+  --glow:rgba(139,107,255,.18);
+  --shadow:0 1px 0 rgba(255,255,255,.03), 0 12px 30px -20px #000;
+  --shadow-lg:0 1px 0 rgba(255,255,255,.04), 0 30px 70px -38px #000;
+  --grid-a:rgba(255,255,255,.030);
+  color-scheme:dark;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BASE
+   ══════════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;font-size:110%}
+body{
+  margin:0;color:var(--ink);background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid-a) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-a) 1px,transparent 1px);
+  background-size:46px 46px,46px 46px;
+  font-family:var(--text);font-size:1.03rem;line-height:1.62;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+::selection{background:var(--uv);color:#fff}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--sp) 4rem;position:relative}
+h1,h2,h3{font-family:var(--disp);font-variation-settings:"wdth" 112;line-height:1.03;margin:0;text-wrap:balance}
+p{text-wrap:pretty}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--uv-ink);text-decoration:none;box-shadow:inset 0 -1px 0 var(--uv-line);transition:box-shadow .18s}
+a:hover{box-shadow:inset 0 -1.5em 0 var(--uv-soft),inset 0 -1px 0 var(--uv)}
+figure{margin:0}
+svg{display:block}
+
+/* ══════════════════════════════════════════════════════════════════
+   CHART GRAMMAR  ·  one visual language for every SVG.
+   Root-level `fill` so it INHERITS: any class on a child always wins.
+   ══════════════════════════════════════════════════════════════════ */
+.ch{width:100%;height:auto;overflow:visible;fill:var(--muted)}
+.ch text{font-family:var(--mono);font-size:11.6px}
+.ch .t-s{font-size:10.2px}
+.ch .t-l{font-size:13.4px}
+.ch .t-xl{font-size:15px;font-weight:500}
+.c-ax{stroke:var(--line-2);fill:none;stroke-width:1}
+.c-grid{stroke:var(--line);fill:none;stroke-width:1;stroke-dasharray:2 5}
+.c-mut{fill:var(--grey)}
+.c-ink{fill:var(--ink)}
+.c-uv{fill:var(--uv)}      .c-uvs{stroke:var(--uv);fill:none}
+.c-uvt{fill:var(--uv-ink)}
+.c-am{fill:var(--amber)}   .c-ams{stroke:var(--amber);fill:none}
+.c-amt{fill:var(--amber-ink)}
+.c-red{fill:var(--red)}    .c-reds{stroke:var(--red);fill:none}
+.c-band{fill:var(--uv-soft)}
+.c-band-a{fill:var(--amber-soft)}
+.c-dead{fill:var(--panel-2)}
+.c-fig{fill:var(--grey-2)}
+.c-fig-2{fill:var(--line-2)}
+.c-pane{fill:var(--panel)}
+.c-white{fill:#fff}
+
+/* chart entrance primitives */
+.drw{stroke-dasharray:var(--len,1200);stroke-dashoffset:var(--len,1200)}
+.rv-in .drw{transition:stroke-dashoffset 1.15s cubic-bezier(.22,.7,.25,1) .12s;stroke-dashoffset:0}
+.pop{opacity:0;transform:scale(.35);transform-origin:center;transform-box:fill-box}
+.rv-in .pop{transition:opacity .45s ease var(--d,.6s),transform .5s cubic-bezier(.2,1.45,.4,1) var(--d,.6s);opacity:1;transform:scale(1)}
+.fadein{opacity:0}
+.rv-in .fadein{transition:opacity .6s ease var(--d,.5s);opacity:1}
+.growy{transform:scaleY(0);transform-origin:bottom;transform-box:fill-box}
+.rv-in .growy{transition:transform .75s cubic-bezier(.22,.7,.25,1) var(--d,0s);transform:scaleY(1)}
+.growx{transform:scaleX(0);transform-origin:left;transform-box:fill-box}
+.rv-in .growx{transition:transform .85s cubic-bezier(.22,.7,.25,1) var(--d,0s);transform:scaleX(1)}
+
+/* ══════════════════════════════════════════════════════════════════
+   REVEAL
+   ══════════════════════════════════════════════════════════════════ */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .7s cubic-bezier(.22,.7,.25,1),transform .7s cubic-bezier(.22,.7,.25,1)}
+.rv-in{opacity:1;transform:none}
+
+/* ══════════════════════════════════════════════════════════════════
+   THEME TOGGLE
+   ══════════════════════════════════════════════════════════════════ */
+.tt{position:fixed;top:14px;right:14px;z-index:60;display:flex;align-items:center;gap:.45rem;
+  border:1px solid var(--line);background:var(--panel);
+  padding:.44rem .64rem;cursor:pointer;color:var(--muted);
+  font-family:var(--mono);font-size:0.72rem;letter-spacing:.15em;text-transform:uppercase;
+  transition:color .18s,border-color .18s}
+@supports (backdrop-filter:blur(1px)){
+  .tt{background:color-mix(in srgb,var(--panel) 78%,transparent);
+      -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+}
+.tt:hover{color:var(--ink);border-color:var(--line-2)}
+.tt:focus-visible{outline:2px solid var(--uv);outline-offset:2px}
+.tt svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.6}
+.tt .ic-l{display:block} .tt .ic-d{display:none}
+:root[data-theme="dark"] .tt .ic-l{display:none}
+:root[data-theme="dark"] .tt .ic-d{display:block}
+:root[data-theme="light"] .tt .ic-l{display:block}
+:root[data-theme="light"] .tt .ic-d{display:none}
+@media(max-width:1439px){.tt{top:auto;bottom:14px;right:14px}}
+
+/* ══════════════════════════════════════════════════════════════════
+   HERO
+   ══════════════════════════════════════════════════════════════════ */
+header{padding:clamp(3rem,8vw,5.4rem) 0 0}
+.hero{display:grid;grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);
+  gap:clamp(1.4rem,4vw,3.2rem);align-items:center}
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:1.4rem}}
+
+.eyebrow{font-family:var(--mono);font-size:0.753rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 1.1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.eyebrow .pip{width:16px;height:6px;background:var(--uv);flex:0 0 16px}
+h1{font-size:clamp(1.86rem,6.1vw,3.41rem);font-weight:800;letter-spacing:-.03em;max-width:17ch;
+  font-variation-settings:"wdth" 108}
+h1 em{font-style:normal;color:var(--uv-ink)}
+.lede{max-width:46ch;margin:1.35rem 0 0;color:var(--muted);font-size:clamp(1rem,2.1vw,1.11rem)}
+
+.hero-fig{position:relative;justify-self:center;width:100%;max-width:460px}
+.hero-fig::before{content:"";position:absolute;inset:8% 10% 16% 10%;border-radius:50%;
+  background:radial-gradient(closest-side,var(--glow),transparent 72%);filter:blur(20px);pointer-events:none}
+.hero-cap{position:absolute;left:2px;bottom:2px;font-family:var(--mono);font-size:0.72rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--grey);max-width:25ch;line-height:1.6}
+@media(max-width:900px){
+  .hero-fig{max-width:340px;margin:.2rem auto 0}
+  .hero-cap{position:static;margin-top:.4rem;max-width:none;text-align:center}
+}
+/* Opaque fill so each layer occludes the ones behind it; that occlusion is
+   what turns a wireframe balloon into a solid object with visible print lines. */
+.hl{fill:var(--paper);fill-opacity:1;stroke:var(--uv);stroke-width:1;
+  stroke-opacity:var(--o,1);vector-effect:non-scaling-stroke;
+  opacity:0;transform:translateY(7px)}
+.hl.on{opacity:1;transform:none;
+  transition:opacity .5s ease var(--d,0s),transform .55s cubic-bezier(.22,.7,.25,1) var(--d,0s)}
+.dimline{stroke:var(--line-2);stroke-width:1;fill:none}
+
+/* segmented control */
+.ctl-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:2rem 0 0}
+.modes{display:inline-flex;border:1px solid var(--line);background:var(--panel);
+  box-shadow:var(--shadow);position:relative}
+.modes .thumb{position:absolute;top:0;bottom:0;left:0;width:0;background:var(--ink);z-index:0;
+  transition:transform .34s cubic-bezier(.4,1.05,.35,1),width .34s cubic-bezier(.4,1.05,.35,1)}
+.modes button{appearance:none;border:0;background:none;cursor:pointer;padding:.56rem 1rem;
+  position:relative;z-index:1;font-family:var(--mono);font-size:0.765rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--muted);transition:color .22s}
+.modes button:hover{color:var(--ink)}
+.modes button.on{color:var(--paper)}
+.modes button:focus-visible{outline:2px solid var(--uv);outline-offset:3px}
+.modes-hint{font-family:var(--mono);font-size:0.753rem;letter-spacing:.1em;color:var(--grey);margin:0;
+  display:flex;align-items:center;gap:.55rem}
+.modes-hint i{width:1px;height:11px;background:var(--line-2);display:inline-block}
+
+/* ══════════════════════════════════════════════════════════════════
+   VERDICT PLATE
+   ══════════════════════════════════════════════════════════════════ */
+.verdict{margin:clamp(2.4rem,6vw,3.6rem) 0 0;border:1px solid var(--line);
+  background:var(--panel);box-shadow:var(--shadow-lg)}
+.vhead{display:flex;justify-content:space-between;align-items:center;gap:1rem;
+  padding:.62rem 1.15rem;border-bottom:1px solid var(--line);background:var(--panel-2);
+  font-family:var(--mono);font-size:0.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr)}
+.vcell{padding:1.4rem 1.2rem 1.5rem;position:relative}
+.vcell+.vcell{border-left:1px solid var(--line)}
+.vcell .k{display:block;font-family:var(--mono);font-size:0.738rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted)}
+.vcell .v{display:block;font-family:var(--disp);font-variation-settings:"wdth" 120;
+  font-variant-numeric:tabular-nums;font-size:clamp(1.29rem,3.9vw,1.82rem);font-weight:800;
+  letter-spacing:-.028em;margin:.6rem 0 .45rem;line-height:1}
+.vcell .d{display:block;font-size:0.896rem;color:var(--muted);line-height:1.52}
+.vcell::after{content:"";position:absolute;left:1.2rem;top:0;width:26px;height:2px;background:var(--uv);
+  transform:scaleX(0);transform-origin:left;transition:transform .55s cubic-bezier(.22,.7,.25,1) var(--d,.2s)}
+.rv-in .vcell::after{transform:scaleX(1)}
+
+.ask{background:var(--pane);color:var(--on-pane);padding:1.35rem 1.2rem;display:grid;
+  grid-template-columns:auto 1fr;gap:1.15rem;align-items:start;position:relative;overflow:hidden}
+.ask::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(115deg,var(--pane-sheen) 0 1px,transparent 1px 9px)}
+.ask>*{position:relative}
+.ask .tagn{font-family:var(--mono);font-size:0.72rem;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid var(--on-pane-line);padding:.32rem .55rem;white-space:nowrap;color:var(--on-pane-3)}
+.ask p{margin:0;font-size:0.98rem;max-width:70ch;color:var(--on-pane-2)}
+.ask b{font-weight:600;color:var(--on-pane)}
+@media(max-width:760px){.vgrid{grid-template-columns:1fr}.vcell+.vcell{border-left:0;border-top:1px solid var(--line)}}
+@media(max-width:560px){.ask{grid-template-columns:1fr;gap:.75rem}}
+
+/* ══════════════════════════════════════════════════════════════════
+   SECTIONS
+   ══════════════════════════════════════════════════════════════════ */
+section{padding:clamp(2.8rem,7vw,4.2rem) 0 1rem;border-top:1px solid var(--line);
+  margin-top:clamp(2.2rem,6vw,3.4rem)}
+section[id]{scroll-margin-top:86px}
+
+.ans{display:grid;grid-template-columns:76px minmax(0,1fr)}
+.ans-n{font-family:var(--disp);font-variation-settings:"wdth" 118;font-weight:800;font-size:2.5rem;
+  line-height:.85;letter-spacing:-.04em;color:var(--line-2);position:relative;padding-top:.1rem}
+.ans-n::after{content:"";position:absolute;left:2px;top:3.1rem;bottom:-.4rem;width:2px;background:var(--uv);
+  transform:scaleY(0);transform-origin:top;transition:transform .7s cubic-bezier(.22,.7,.25,1) .1s}
+.rv-in .ans-n::after{transform:scaleY(1)}
+.ans-b{padding-left:.2rem}
+.q{margin:0;font-family:var(--mono);font-size:0.799rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:.55rem}
+.q::before{content:"";width:5px;height:5px;background:var(--uv);flex:0 0 5px}
+h2{font-size:clamp(1.41rem,4.3vw,2.07rem);font-weight:800;letter-spacing:-.028em;margin:.7rem 0 0;
+  max-width:23ch;font-variation-settings:"wdth" 106}
+h2 em{font-style:normal;color:var(--uv-ink)}
+h2 .warn{font-style:normal;color:var(--amber-ink)}
+.because{margin:.95rem 0 0;max-width:57ch;font-size:1.005rem;color:var(--muted)}
+.because b{color:var(--ink);font-weight:600}
+@media(max-width:620px){
+  .ans{grid-template-columns:1fr;gap:.5rem}
+  .ans-n{font-family:var(--mono);font-size:0.805rem;font-weight:500;letter-spacing:.18em;
+    color:var(--uv-ink);padding-top:0;font-variation-settings:normal}
+  .ans-n::after{display:none}
+  .ans-b{padding-left:0}
+}
+
+figcaption{font-size:0.853rem;color:var(--muted);margin-top:.85rem;max-width:70ch;
+  font-family:var(--mono);line-height:1.6}
+
+/* disclosure */
+details{margin:1.9rem 0 0;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow)}
+summary{cursor:pointer;list-style:none;padding:.85rem 1.05rem;font-family:var(--mono);font-size:0.822rem;
+  letter-spacing:.04em;color:var(--uv-ink);display:flex;gap:.7rem;align-items:center;transition:background .18s}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"";width:11px;height:11px;flex:0 0 11px;
+  background:linear-gradient(var(--uv),var(--uv)) center/11px 1.6px no-repeat,
+             linear-gradient(var(--uv),var(--uv)) center/1.6px 11px no-repeat;
+  transition:transform .3s cubic-bezier(.4,1.1,.35,1)}
+details[open] summary::before{background:linear-gradient(var(--uv),var(--uv)) center/11px 1.6px no-repeat;
+  transform:rotate(180deg)}
+summary:hover{background:var(--uv-soft)}
+summary:focus-visible{outline:2px solid var(--uv);outline-offset:-2px}
+.dbody{padding:.1rem 1.05rem 1.15rem;border-top:1px solid var(--line)}
+.dbody p{max-width:66ch;font-size:0.925rem;margin:.95rem 0 0;color:var(--muted)}
+.dbody strong{color:var(--ink);font-weight:600}
+
+/* visual containers */
+.viz{background:var(--panel);border:1px solid var(--line);padding:1.4rem 1.3rem 1.5rem;
+  margin:2rem 0 0;box-shadow:var(--shadow)}
+.viz-t{font-family:var(--mono);font-size:0.774rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 1.2rem;padding-bottom:.75rem;border-bottom:1px solid var(--line);
+  display:flex;gap:.6rem;align-items:baseline}
+.viz-t::before{content:"";width:5px;height:5px;background:var(--uv);flex:0 0 5px;translate:0 -1px}
+.scroller{overflow-x:auto;scrollbar-width:thin}
+@media(max-width:760px){
+  .scroller svg{min-width:620px}
+  .scroller{margin-right:calc(-1 * 1.3rem);padding-right:1.3rem}
+}
+.swipe{display:none;font-family:var(--mono);font-size:0.72rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--grey);margin:.65rem 0 0}
+@media(max-width:760px){.swipe{display:block}}
+
+/* ══════════════════════════════════════════════════════════════════
+   MECHANISM PAIR
+   ══════════════════════════════════════════════════════════════════ */
+.mech{display:grid;grid-template-columns:1fr 1fr;margin:2rem 0 0;border:1px solid var(--line);
+  box-shadow:var(--shadow)}
+.mech>div{background:var(--panel);padding:1.35rem 1.25rem 1.4rem;position:relative}
+.mech>div+div{border-left:1px solid var(--line)}
+.mech>div::before{content:"";position:absolute;top:0;left:0;right:0;height:2px}
+.mech>div:first-child::before{background:var(--amber)}
+.mech>div:last-child::before{background:var(--uv)}
+.mech h3{font-size:1.06rem;font-variation-settings:"wdth" 100;font-weight:700;
+  letter-spacing:-.012em;margin-bottom:1rem}
+.mech .tagn{display:inline-block;font-family:var(--mono);font-size:0.714rem;letter-spacing:.14em;
+  text-transform:uppercase;padding:.28rem .5rem;margin-bottom:.75rem}
+.mech .tagn.a{background:var(--amber-soft);color:var(--amber-ink)}
+.mech .tagn.u{background:var(--uv-soft);color:var(--uv-ink)}
+.mech p{font-size:0.963rem;margin:1rem 0 0;color:var(--muted);padding-top:.9rem;border-top:1px solid var(--line)}
+.mech p b{color:var(--ink);font-weight:600;display:block;margin-bottom:.2rem}
+@media(max-width:700px){.mech{grid-template-columns:1fr}.mech>div+div{border-left:0;border-top:1px solid var(--line)}}
+
+/* ══════════════════════════════════════════════════════════════════
+   THROUGHPUT
+   ══════════════════════════════════════════════════════════════════ */
+.tp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap}
+.tp-head label{font-family:var(--mono);font-size:0.774rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.tp-count{font-family:var(--disp);font-variation-settings:"wdth" 120;font-variant-numeric:tabular-nums;
+  font-weight:800;font-size:1.45rem;color:var(--uv-ink);line-height:1;letter-spacing:-.02em}
+.tp-count small{font-size:0.805rem;font-weight:600;color:var(--muted);font-variation-settings:"wdth" 100;letter-spacing:0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;background:transparent;
+  margin:1rem 0 .3rem;height:24px;cursor:pointer}
+input[type=range]:focus{outline:none}
+input[type=range]:focus-visible{outline:2px solid var(--uv);outline-offset:4px}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line-2)}
+input[type=range]::-moz-range-track{height:2px;background:var(--line-2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;background:var(--uv);
+  border:3px solid var(--panel);box-shadow:0 0 0 1px var(--uv);margin-top:-10.5px;transition:transform .16s}
+input[type=range]::-moz-range-thumb{width:17px;height:17px;background:var(--uv);border:3px solid var(--panel);
+  box-shadow:0 0 0 1px var(--uv);border-radius:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
+.tp-ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.72rem;
+  color:var(--grey);margin:0 0 1.7rem;font-variant-numeric:tabular-nums}
+
+.row{margin-bottom:1.35rem}
+.row-top{display:flex;justify-content:space-between;font-size:0.913rem;margin-bottom:.45rem;gap:1rem;align-items:baseline}
+.row-top .name{font-weight:600;display:flex;align-items:center;gap:.5rem}
+.row-top .name i{width:9px;height:9px;flex:0 0 9px}
+.row-top .val{font-family:var(--mono);color:var(--ink);white-space:nowrap;
+  font-variant-numeric:tabular-nums;font-weight:500}
+.nightlbl{margin:0 0 .35rem;font-family:var(--mono);font-size:0.69rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--uv-ink)}
+.track{position:relative;height:22px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+.nightband{position:absolute;top:0;bottom:0;left:0;z-index:0;background:var(--uv-soft)}
+.nightedge{position:absolute;top:0;bottom:0;z-index:3;width:0;border-left:1px dashed var(--uv-line)}
+.fill{position:relative;z-index:2;height:100%;width:0;transition:width .34s cubic-bezier(.3,.9,.3,1)}
+.fill.fdm{background:repeating-linear-gradient(90deg,var(--amber) 0 6px,transparent 6px 12px),var(--amber-soft)}
+.fill.res{background:var(--uv)}
+.plate-seps{position:absolute;inset:0;pointer-events:none}
+.plate-seps i{position:absolute;top:0;bottom:0;width:1px;background:var(--panel);opacity:.9}
+.axis{position:relative;height:19px;margin-top:2px}
+.axis i{position:absolute;top:0;width:1px;height:5px;background:var(--line-2)}
+.axis span{position:absolute;top:7px;font-family:var(--mono);font-size:0.69rem;color:var(--grey);
+  translate:-50% 0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tp-note{font-size:0.941rem;color:var(--muted);border-left:2px solid var(--uv);
+  padding:.15rem 0 .15rem .85rem;margin:1.2rem 0 0}
+.tp-note b{color:var(--ink);font-weight:600}
+
+/* ══════════════════════════════════════════════════════════════════
+   MACHINE CARDS
+   ══════════════════════════════════════════════════════════════════ */
+.machines{display:grid;grid-template-columns:repeat(3,1fr);margin:2rem 0 0;
+  border:1px solid var(--line);box-shadow:var(--shadow)}
+.mach{background:var(--panel);padding:1.3rem 1.2rem 1.35rem;display:flex;flex-direction:column;position:relative}
+.mach+.mach{border-left:1px solid var(--line)}
+.mach::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--line-2)}
+.mach.pick{background:var(--uv-soft)}
+.mach.pick::before{background:var(--uv)}
+.mach.alt::before{background:var(--amber)}
+.mach.no::before{background:var(--red)}
+.verdictline{font-family:var(--mono);font-size:0.72rem;letter-spacing:.15em;text-transform:uppercase;
+  margin-bottom:.85rem;display:flex;align-items:center;gap:.45rem;color:var(--muted)}
+.verdictline i{width:6px;height:6px;flex:0 0 6px;background:currentColor}
+.mach.pick .verdictline{color:var(--uv-ink)}
+.mach.no .verdictline{color:var(--red)}
+.mach.alt .verdictline{color:var(--amber-ink)}
+.mach h3{font-size:1.04rem;font-variation-settings:"wdth" 100;font-weight:700;
+  margin-bottom:.3rem;letter-spacing:-.012em}
+.mach .spec{font-family:var(--mono);font-size:0.811rem;color:var(--muted);margin:0 0 .85rem}
+.mach .price{font-family:var(--disp);font-variation-settings:"wdth" 120;font-variant-numeric:tabular-nums;
+  font-weight:800;font-size:1.29rem;letter-spacing:-.028em;margin:0 0 1rem;line-height:1}
+.mach p.why{font-size:0.929rem;color:var(--muted);margin:1rem 0 0;padding-top:.9rem;border-top:1px solid var(--line)}
+.mach .vid{align-self:flex-start;margin-top:.85rem;font-size:0.799rem;font-family:var(--mono);letter-spacing:.05em}
+@media(max-width:800px){.machines{grid-template-columns:1fr}.mach+.mach{border-left:0;border-top:1px solid var(--line)}}
+
+/* ══════════════════════════════════════════════════════════════════
+   VALUE BAR + LEGEND
+   ══════════════════════════════════════════════════════════════════ */
+.valbar{display:flex;height:56px;border:1px solid var(--line);margin:0 0 1.2rem;overflow:hidden}
+.valbar div{display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+  font-size:0.782rem;font-weight:500;overflow:hidden;white-space:nowrap;
+  transform:scaleX(0);transform-origin:left;transition:opacity .2s}
+.rv-in .valbar div{transform:scaleX(1);
+  transition:transform .8s cubic-bezier(.22,.7,.25,1) var(--d,0s),opacity .2s}
+.valbar.dim div:not(.hi){opacity:.2}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:0 1.7rem;
+  font-size:0.88rem;color:var(--muted)}
+.legend .lg{display:flex;gap:.6rem;align-items:baseline;padding:.42rem 0;
+  border-bottom:1px solid var(--line);transition:color .18s}
+.legend .lg:hover{color:var(--ink)}
+.dot{width:9px;height:9px;flex:0 0 9px;translate:0 1px}
+.legend b{font-family:var(--mono);font-weight:500;margin-left:auto;color:var(--ink);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.hands{border-top:1px solid var(--line);margin-top:1.5rem;padding-top:1.35rem;display:grid;
+  grid-template-columns:auto 1fr;gap:1.35rem;align-items:start}
+.hands .big{font-family:var(--disp);font-variation-settings:"wdth" 120;font-variant-numeric:tabular-nums;
+  font-weight:800;font-size:1.68rem;letter-spacing:-.03em;color:var(--amber-ink);white-space:nowrap;
+  line-height:1;padding-right:1.35rem;border-right:1px solid var(--line)}
+.hands .big small{display:block;font-family:var(--mono);font-size:0.69rem;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin-top:.55rem;font-weight:500;font-variation-settings:normal}
+.hands p{margin:0;font-size:0.957rem;color:var(--muted)}
+.hands p b{color:var(--ink);font-weight:600}
+@media(max-width:600px){
+  .hands{grid-template-columns:1fr;gap:.9rem}
+  .hands .big{border-right:0;padding-right:0;border-bottom:1px solid var(--line);padding-bottom:.9rem}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RISKS  ·  6-col grid so every row fills exactly (3 + 2)
+   ══════════════════════════════════════════════════════════════════ */
+.risks{display:grid;grid-template-columns:repeat(6,1fr);margin:2rem 0 0;
+  border-top:1px solid var(--line);border-left:1px solid var(--line);box-shadow:var(--shadow)}
+.risk{background:var(--panel);padding:1.25rem 1.15rem 1.35rem;grid-column:span 2;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.risk:nth-child(4),.risk:nth-child(5){grid-column:span 3}
+.risk .lvl{font-family:var(--mono);font-size:0.702rem;letter-spacing:.15em;text-transform:uppercase;
+  display:flex;gap:.55rem;align-items:center;margin-bottom:.7rem;color:var(--muted)}
+.meter{display:flex;gap:2px;flex:0 0 auto}
+.meter i{width:9px;height:5px;background:var(--grey-2)}
+.risk h3{font-size:0.985rem;font-variation-settings:"wdth" 100;font-weight:700;
+  margin-bottom:.45rem;letter-spacing:-.01em}
+.risk p{margin:0;font-size:0.941rem;color:var(--muted)}
+@media(max-width:900px){
+  .risks{grid-template-columns:repeat(2,1fr)}
+  .risk,.risk:nth-child(4),.risk:nth-child(5){grid-column:span 1}
+  .risk:nth-child(5){grid-column:span 2}
+}
+@media(max-width:620px){
+  .risks{grid-template-columns:1fr}
+  .risk,.risk:nth-child(4),.risk:nth-child(5){grid-column:span 1}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   KICKER
+   ══════════════════════════════════════════════════════════════════ */
+.kicker{background:var(--pane);color:var(--on-pane);padding:clamp(1.7rem,4.5vw,2.6rem);
+  position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+.kicker::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(var(--pane-sheen) 1px,transparent 1px) 0 0/100% 42px,
+             radial-gradient(120% 90% at 88% 6%,var(--pane-sheen),transparent 62%)}
+.kicker>*{position:relative}
+.kicker .eyebrow{color:var(--on-pane-3)}
+.kicker .eyebrow .pip{background:var(--on-pane-em)}
+.kicker h2{color:var(--on-pane);max-width:20ch;font-size:clamp(1.5rem,4.8vw,2.27rem)}
+.kicker h2 em{color:var(--on-pane-em);font-style:normal}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);margin:2rem 0 0;border:1px solid var(--on-pane-line)}
+.step{padding:1.2rem 1.1rem 1.3rem}
+.step+.step{border-left:1px solid var(--on-pane-line)}
+.step .n{font-family:var(--mono);font-size:0.72rem;letter-spacing:.15em;color:var(--on-pane-3);
+  display:flex;align-items:center;gap:.5rem;text-transform:uppercase}
+.step .n em{font-style:normal;width:19px;height:19px;border:1px solid var(--on-pane-line);
+  display:inline-flex;align-items:center;justify-content:center;font-size:0.696rem;flex:0 0 19px}
+.step b{display:block;font-family:var(--disp);font-variation-settings:"wdth" 116;font-weight:800;
+  font-size:1.18rem;margin:.7rem 0 .45rem;letter-spacing:-.026em;color:var(--on-pane)}
+.step p{margin:0;font-size:0.924rem;color:var(--on-pane-2)}
+.rule{margin:2rem 0 0;padding-top:1.5rem;border-top:1px solid var(--on-pane-line);
+  display:grid;grid-template-columns:1fr 1fr;gap:1.6rem}
+.rule div{font-size:0.935rem;color:var(--on-pane-2)}
+.rule .h{font-family:var(--mono);font-size:0.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--on-pane-3);display:flex;align-items:center;gap:.45rem;margin-bottom:.55rem}
+.rule .h i{width:14px;height:5px;background:currentColor;flex:0 0 14px}
+@media(max-width:720px){
+  .steps,.rule{grid-template-columns:1fr}
+  .step+.step{border-left:0;border-top:1px solid var(--on-pane-line)}
+}
+
+footer{padding:2.6rem 0 0;font-size:0.853rem;color:var(--grey);border-top:1px solid var(--line);
+  margin-top:3.4rem;line-height:1.7}
+footer p{max-width:80ch;margin:0}
+footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:.7rem}
+
+/* ══════════════════════════════════════════════════════════════════
+   NAV
+   ══════════════════════════════════════════════════════════════════ */
+.rail{display:none;position:fixed;z-index:40;top:50%;translate:0 -50%;
+  left:max(14px,calc((100vw - var(--maxw))/2 - 209px));width:195px}
+/* the wider rail needs a wider window before it can sit clear of the text */
+@media(min-width:1440px){.rail{display:block}}
+.rail-line{position:absolute;left:33px;top:8px;bottom:26px;width:1px;background:var(--line)}
+.rail-line i{display:block;width:100%;height:0;background:var(--uv)}
+.rail-item{position:relative;display:flex;align-items:center;gap:1rem;padding:.7rem 0;
+  color:var(--grey);box-shadow:none;transition:color .18s}
+.rail-item:hover{color:var(--ink);box-shadow:none}
+.rail-item .glyph{width:66px;display:flex;justify-content:flex-end;flex:0 0 66px}
+.rail-item .glyph i{height:8px;background:var(--grey-2);transition:background .2s,height .2s}
+.rail-item:hover .glyph i{background:var(--grey)}
+.rail-item.on .glyph i{background:var(--uv);height:11px}
+.rail-item .rl{font-family:var(--mono);font-size:0.9rem;letter-spacing:.04em;line-height:1.35;white-space:nowrap}
+.rail-item .rl b{display:block;font-weight:400;font-size:0.805rem;letter-spacing:.16em;color:var(--grey-2)}
+.rail-item.on{color:var(--ink)}
+.rail-item.on .rl b{color:var(--uv-ink)}
+.rail-item:focus-visible{outline:2px solid var(--uv);outline-offset:3px}
+
+.mnav{position:fixed;z-index:45;top:0;left:0;right:0;background:var(--paper);
+  border-bottom:1px solid var(--line);translate:0 -110%;transition:translate .28s cubic-bezier(.3,.9,.3,1)}
+@supports (backdrop-filter:blur(1px)){
+  .mnav{background:color-mix(in srgb,var(--paper) 88%,transparent);
+    -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4)}
+}
+.mnav.show{translate:0 0}
+@media(min-width:1440px){.mnav{display:none}}
+.mnav-prog{height:2px;background:var(--panel-2)}
+.mnav-prog i{display:block;height:100%;width:0;background:var(--uv)}
+.mnav-strip{display:flex;gap:.1rem;overflow-x:auto;padding:.42rem var(--sp);scrollbar-width:none}
+.mnav-strip::-webkit-scrollbar{display:none}
+.mchip{display:inline-flex;align-items:center;gap:.42rem;padding:.35rem .6rem;flex:0 0 auto;box-shadow:none;
+  font-family:var(--mono);font-size:0.753rem;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;transition:color .18s,background .18s}
+.mchip i{width:13px;height:5px;background:var(--grey-2);flex:0 0 13px;transition:background .18s}
+.mchip:hover{background:none;box-shadow:none;color:var(--ink)}
+.mchip.on{color:var(--uv-ink);background:var(--uv-soft)}
+.mchip.on i{background:var(--uv)}
+
+/* ══════════════════════════════════════════════════════════════════
+   GLOSSARY  ·  the uncommon words.
+   A dotted rule plus a superscript pip marks the word; one shared
+   card moves to whichever word is live.  Our own definition renders
+   instantly from local data; the Wikipedia line and picture arrive
+   afterwards and are never waited on.
+   ══════════════════════════════════════════════════════════════════ */
+.gl{
+  cursor:help;color:inherit;padding-inline:.05em;
+  text-decoration:underline dotted var(--uv-line);
+  text-decoration-thickness:1px;text-underline-offset:.22em;
+  transition:background-color .2s,color .2s,text-decoration-color .2s;
+}
+.gl::after{
+  content:"";display:inline-block;width:3.5px;height:3.5px;background:var(--uv-line);
+  vertical-align:.52em;margin-left:.2em;
+  transition:background-color .2s,transform .2s cubic-bezier(.3,1.4,.4,1);
+}
+.gl:hover,.gl.gl-on{background:var(--uv-soft);color:var(--uv-ink);text-decoration-color:var(--uv)}
+.gl:hover::after,.gl.gl-on::after{background:var(--uv);transform:scale(1.55)}
+.gl:focus-visible{outline:2px solid var(--uv);outline-offset:2px;background:var(--uv-soft)}
+.gl-pulse::after{background:var(--uv);animation:glpip 1.15s cubic-bezier(.4,0,.4,1) 3}
+@keyframes glpip{0%,100%{transform:scale(1)}48%{transform:scale(2.15)}}
+
+/* the standing instruction, in the hero */
+.gl-tip{margin:1.1rem 0 0;display:flex;gap:.62rem;align-items:baseline;max-width:50ch;
+  font-family:var(--mono);font-size:0.72rem;line-height:1.8;letter-spacing:.02em;color:var(--grey)}
+.gl-tip>i{width:16px;height:6px;background:var(--uv-line);flex:0 0 16px;translate:0 -2px}
+.gl-tip b{color:var(--muted);font-weight:500}
+.gl-tip .gl{text-underline-offset:.2em}
+
+/* ── the card ── */
+.glc{position:fixed;z-index:80;top:0;left:0;width:min(430px,calc(100vw - 24px));
+  background:var(--panel);border:1px solid var(--line-2);box-shadow:var(--shadow-lg);
+  opacity:0;visibility:hidden;transform:translateY(6px);pointer-events:none;
+  transition:opacity .19s ease,transform .22s cubic-bezier(.22,.7,.25,1),visibility .19s}
+.glc.on{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+.glc-notch{position:absolute;width:9px;height:9px;background:var(--panel);
+  border-left:1px solid var(--line-2);border-top:1px solid var(--line-2);
+  transform:rotate(45deg);transition:opacity .15s}
+.glc[data-side="below"] .glc-notch{top:-5px}
+.glc[data-side="above"] .glc-notch{bottom:-5px;transform:rotate(225deg)}
+
+.glc-in{display:grid;grid-template-columns:92px minmax(0,1fr);gap:1rem;padding:1.05rem 1.1rem .95rem}
+.glc.nofig .glc-in{grid-template-columns:minmax(0,1fr)}
+.glc.nofig .glc-fig{display:none}
+.glc-fig{width:92px;aspect-ratio:1;border:1px solid var(--line);background:var(--panel-2);
+  position:relative;overflow:hidden}
+.glc-fig img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .3s}
+.glc-fig img.in{opacity:1}
+:root[data-theme="dark"] .glc-fig img{filter:saturate(.92) brightness(.93)}
+.glc-fig svg{width:100%;height:100%;padding:6px}
+.glc-fig.wait::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 18%,var(--line) 50%,transparent 82%);
+  background-size:260% 100%;animation:glsheen 1.15s linear infinite}
+@keyframes glsheen{from{background-position:130% 0}to{background-position:-130% 0}}
+
+.glc-k{margin:0;font-family:var(--mono);font-size:0.66rem;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--grey);display:flex;align-items:center;gap:.45rem}
+.glc-k i{width:5px;height:5px;background:var(--uv);flex:0 0 5px}
+.glc-t{font-family:var(--disp);font-variation-settings:"wdth" 108;font-weight:800;font-size:1.05rem;
+  letter-spacing:-.022em;line-height:1.14;margin:.4rem 0 0;color:var(--ink);text-wrap:balance}
+.glc-t::after{content:"";display:block;width:22px;height:2px;background:var(--uv);margin:.52rem 0 .56rem}
+.glc-o{margin:0;font-size:0.87rem;line-height:1.53;color:var(--ink)}
+.glc-o b{font-weight:600}
+.glc-w{margin:.66rem 0 0;padding-top:.62rem;border-top:1px dashed var(--line)}
+.glc-w span{display:block;font-family:var(--mono);font-size:0.645rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--grey);margin-bottom:.34rem}
+.glc-w p{margin:0;font-size:0.815rem;line-height:1.5;color:var(--muted)}
+.glc-w.hide{display:none}
+.glc-sk i{display:block;height:7px;background:var(--panel-2);margin-bottom:6px;
+  animation:glsheen 1.15s linear infinite;
+  background-image:linear-gradient(100deg,transparent 18%,var(--line) 50%,transparent 82%);
+  background-size:260% 100%}
+.glc-sk i:nth-child(2){width:92%;animation-delay:.08s}
+.glc-sk i:nth-child(3){width:64%;margin-bottom:0;animation-delay:.16s}
+
+.glc-f{display:flex;justify-content:space-between;align-items:center;gap:.8rem;
+  padding:.56rem 1.1rem;border-top:1px solid var(--line);background:var(--panel-2);
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:.13em;text-transform:uppercase}
+.glc-f a{color:var(--uv-ink);box-shadow:none;display:inline-flex;align-items:center;gap:.4rem}
+.glc-f a:hover{background:none;box-shadow:inset 0 -1px 0 var(--uv)}
+.glc-f a:focus-visible{outline:2px solid var(--uv);outline-offset:2px}
+.glc-f a.hide{display:none}
+.glc-f .src{color:var(--grey)}
+.glc-f .kb{color:var(--grey);display:flex;align-items:center;gap:.4rem;white-space:nowrap}
+.glc-f .kb b{border:1px solid var(--line-2);padding:.06rem .3rem;font-weight:500;letter-spacing:.08em}
+.glc-x{display:none;position:absolute;top:0;right:0;width:42px;height:42px;appearance:none;border:0;
+  background:none;color:var(--muted);cursor:pointer;align-items:center;justify-content:center}
+.glc-x svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.7;fill:none}
+.glc-x:focus-visible{outline:2px solid var(--uv);outline-offset:-3px}
+
+/* ── narrow/touch (tablets — phones never get this far, see GATE) ──
+   the card becomes a sheet: no hover to bridge, so pin it to an edge  */
+.glc-scrim{position:fixed;inset:0;z-index:70;background:rgba(10,10,13,.42);
+  opacity:0;visibility:hidden;transition:opacity .26s,visibility .26s}
+.glc-scrim.on{opacity:1;visibility:visible}
+@media(min-width:861px){.glc-scrim{display:none}}
+@media(max-width:860px){
+  .glc{left:0!important;top:auto!important;right:0;bottom:0;width:100%;max-width:none;
+    border-left:0;border-right:0;border-bottom:0;transform:translateY(101%);
+    transition:transform .32s cubic-bezier(.25,.9,.3,1),opacity .2s,visibility .2s}
+  .glc.on{transform:none}
+  .glc-notch{display:none}
+  .glc-x{display:flex}
+  .glc-in{grid-template-columns:104px minmax(0,1fr);padding:1.2rem var(--sp) 1rem}
+  .glc-in>div{max-width:60ch}
+  .glc-fig{width:104px}
+  .glc-f{padding:.62rem var(--sp)}
+  .glc-f .kb{display:none}
+}
+
+/* ── the one-time coachmark ── */
+.glh{position:fixed;z-index:78;width:min(272px,calc(100vw - 28px));
+  background:var(--pane);color:var(--on-pane);border:1px solid var(--uv);
+  padding:.78rem .9rem .7rem;box-shadow:var(--shadow-lg);pointer-events:none;
+  opacity:0;visibility:hidden;transform:translateY(-6px) scale(.97);transform-origin:26px 100%;
+  transition:opacity .3s ease,transform .38s cubic-bezier(.2,1.3,.4,1),visibility .3s}
+.glh.on{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+.glh[data-side="below"]{transform-origin:26px 0;transform:translateY(6px) scale(.97)}
+.glh[data-side="below"].on{transform:none}
+.glh p{margin:0;font-size:0.85rem;line-height:1.5;color:var(--on-pane-2)}
+.glh p b{color:var(--on-pane);font-weight:600}
+.glh .glh-r{display:flex;justify-content:space-between;align-items:center;gap:.8rem;margin-top:.7rem}
+.glh .glh-k{font-family:var(--mono);font-size:0.645rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--on-pane-3);display:flex;align-items:center;gap:.42rem}
+.glh .glh-k i{width:13px;height:4px;background:var(--on-pane-em);flex:0 0 13px}
+.glh button{appearance:none;cursor:pointer;border:1px solid var(--on-pane-line);background:none;
+  color:var(--on-pane);font-family:var(--mono);font-size:0.66rem;letter-spacing:.14em;
+  text-transform:uppercase;padding:.32rem .58rem;transition:background-color .18s}
+.glh button:hover{background:rgba(255,255,255,.13)}
+.glh button:focus-visible{outline:2px solid var(--on-pane-em);outline-offset:2px}
+.glh-notch{position:absolute;width:9px;height:9px;background:var(--pane);left:26px;
+  border-right:1px solid var(--uv);border-bottom:1px solid var(--uv);transform:rotate(45deg)}
+.glh[data-side="above"] .glh-notch{bottom:-5px}
+.glh[data-side="below"] .glh-notch{top:-5px;border:0;border-left:1px solid var(--uv);border-top:1px solid var(--uv)}
+
+/* ══════════════════════════════════════════════════════════════════
+   GATE  ·  below 768 px the six charts are drawn to scale and stop
+   being readable, so the memo declines to render rather than render
+   badly.  Pure CSS: no flash of unreadable content, no JS required.
+   ══════════════════════════════════════════════════════════════════ */
+.gate{display:none;position:fixed;inset:0;z-index:100;overflow-y:auto;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid-a) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-a) 1px,transparent 1px),
+    radial-gradient(120% 70% at 50% -10%,var(--uv-soft),transparent 62%);
+  background-size:46px 46px,46px 46px,100% 100%}
+.gate-in{min-height:100%;display:flex;padding:clamp(1.1rem,5vw,2.4rem) clamp(1.1rem,5vw,2rem)}
+/* auto margins, not justify-content: centring that never clips the top
+   when the card is taller than the viewport */
+.gate-card{border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow-lg);
+  max-width:430px;margin:auto;width:100%}
+.gate-h{display:flex;align-items:center;justify-content:space-between;gap:.8rem;
+  padding:.6rem .95rem;border-bottom:1px solid var(--line);background:var(--panel-2);
+  font-family:var(--mono);font-size:0.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.gate-h .pip{width:14px;height:5px;background:var(--uv);flex:0 0 14px}
+.gate-h span:first-child{display:flex;align-items:center;gap:.5rem}
+.gate-b{padding:1.3rem 1.15rem 1.4rem}
+.gate-fig{width:100%;max-width:300px;margin:0 auto .2rem;display:block}
+.gate h2{font-size:clamp(1.34rem,6.6vw,1.62rem);font-weight:800;letter-spacing:-.028em;
+  max-width:19ch;margin:1.15rem 0 0;font-variation-settings:"wdth" 106}
+.gate h2 em{font-style:normal;color:var(--uv-ink)}
+.gate-p{margin:.85rem 0 0;font-size:0.925rem;line-height:1.6;color:var(--muted);max-width:44ch}
+.gate-p b{color:var(--ink);font-weight:600}
+
+/* the live width meter — the reason, stated as a measurement */
+.gate-m{margin:1.35rem 0 0;padding-top:1.15rem;border-top:1px solid var(--line)}
+.gate-mt{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.gate-mt b{font-family:var(--disp);font-variation-settings:"wdth" 120;font-weight:800;
+  font-variant-numeric:tabular-nums;font-size:1.16rem;letter-spacing:-.026em;color:var(--red);
+  text-transform:none;letter-spacing:-.02em}
+.gate-tr{position:relative;height:16px;background:var(--panel-2);border:1px solid var(--line);
+  margin:.6rem 0 .35rem;overflow:hidden}
+.gate-fl{height:100%;width:0;background:repeating-linear-gradient(90deg,var(--red) 0 5px,transparent 5px 10px),
+  var(--amber-soft);transition:width .35s cubic-bezier(.3,.9,.3,1)}
+.gate-need{position:absolute;top:-3px;bottom:-3px;right:0;width:0;border-left:1.5px solid var(--uv)}
+.gate-mb{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.665rem;
+  color:var(--grey);font-variant-numeric:tabular-nums}
+.gate-mb b{color:var(--uv-ink);font-weight:500}
+
+.gate-do{margin:1.3rem 0 0;border-top:1px solid var(--line);padding-top:1.15rem;display:grid;gap:.8rem}
+.gate-do div{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;
+  font-size:0.895rem;line-height:1.55;color:var(--muted)}
+.gate-do b{display:block;color:var(--ink);font-weight:600;font-size:0.925rem}
+.gate-do i{width:9px;height:9px;flex:0 0 9px;background:var(--uv);translate:0 .42rem}
+.gate-do div+div i{background:var(--grey-2)}
+.gate-f{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;
+  padding:.7rem .95rem;border-top:1px solid var(--line);background:var(--panel-2)}
+.gate-f .note{font-family:var(--mono);font-size:0.655rem;letter-spacing:.13em;text-transform:uppercase;color:var(--grey)}
+.gate-cp{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--panel);
+  color:var(--uv-ink);font-family:var(--mono);font-size:0.68rem;letter-spacing:.13em;text-transform:uppercase;
+  padding:.44rem .7rem;display:inline-flex;align-items:center;gap:.45rem;transition:background-color .18s,border-color .18s}
+.gate-cp:hover{background:var(--uv-soft);border-color:var(--uv-line)}
+.gate-cp:focus-visible{outline:2px solid var(--uv);outline-offset:2px}
+.gate-cp svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.6}
+.gate-cp.done{color:var(--green);border-color:var(--green)}
+.gate-cp.hide{display:none}
+
+/* short screens: give the illustration up first, then the breathing room */
+@media(max-height:920px){
+  .gate-b{padding:1.05rem 1.05rem 1.15rem}
+  .gate-fig{max-width:250px}
+  .gate h2{margin-top:.9rem}
+  .gate-p{margin-top:.7rem;font-size:0.895rem}
+  .gate-m{margin-top:1.05rem;padding-top:.9rem}
+  .gate-do{margin-top:1.05rem;padding-top:.9rem;gap:.65rem}
+}
+@media(max-height:700px){
+  .gate-fig{display:none}
+  .gate-do div+div{display:none}
+}
+
+@media(max-width:767px){
+  .wrap,.rail,.mnav,.tt,.glc,.glc-scrim,.glh{display:none!important}
+  .gate{display:block}
+  html,body{overflow:hidden;height:100%}
+}
+/* a wide-but-very-short window (phone in landscape) is no better */
+@media(max-height:420px) and (max-width:900px){
+  .wrap,.rail,.mnav,.tt,.glc,.glc-scrim,.glh{display:none!important}
+  .gate{display:block}
+  html,body{overflow:hidden;height:100%}
+  .gate-in{justify-content:flex-start}
+}
+
+/* ── on paper the dotted words become numbered footnotes ── */
+.gl-print{display:none;margin-top:2.4rem;padding-top:1.4rem;border-top:1px solid var(--line);
+  break-before:page}
+.gl-print .glp-k{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:.9rem}
+.gl-print ol{margin:0;padding:0;list-style:none;columns:2;column-gap:2.2rem}
+.gl-print li{margin:0 0 .62rem;font-size:0.8rem;line-height:1.5;color:var(--muted);break-inside:avoid}
+.gl-print li b{color:var(--ink);font-weight:600}
+.gl-print li em{font-style:normal;font-family:var(--mono);color:var(--uv-ink);margin-right:.35em}
+
+/* ══════════════════════════════════════════════════════════════════
+   MOTION / PRINT
+   ══════════════════════════════════════════════════════════════════ */
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none}
+  .drw{stroke-dashoffset:0}
+  .pop,.fadein{opacity:1;transform:none}
+  .growy,.growx,.valbar div{transform:none}
+  .hl{opacity:1;transform:none}
+  .vcell::after,.ans-n::after{transform:none}
+}
+@media print{
+  :root{
+    --paper:#fff; --panel:#fff; --panel-2:#F2F1EE; --line:#D5D3CC; --line-2:#AEABA1;
+    --ink:#111; --muted:#4E4E48; --grey:#75746D; --grey-2:#C4C2B9;
+    --uv:#5B3FD1; --uv-ink:#3A208F; --uv-soft:#EDE9FB; --uv-line:#C6B8F2;
+    --amber:#A96A00; --amber-ink:#7A4800; --amber-soft:#F7EBD5;
+    --red:#A63324; --green:#136B50;
+    --pane:#fff; --on-pane:#111; --on-pane-2:#3A3A36; --on-pane-3:#6C6B64;
+    --on-pane-line:#D5D3CC; --on-pane-em:#3A208F; --pane-sheen:transparent;
+    --glow:transparent; --shadow:none; --shadow-lg:none; --grid-a:transparent;
+    color-scheme:light;
+  }
+  .rail,.mnav,.ctl-row,.tt,.swipe,.gate,.glc,.glc-scrim,.glh,.gl-tip{display:none!important}
+  html,body{overflow:visible;height:auto}
+  body{background:#fff}
+  /* hover cannot survive paper, so the dotted words become footnotes */
+  .gl{text-decoration:none;background:none;color:inherit}
+  .gl::after{width:auto;height:auto;background:none;margin-left:.1em;vertical-align:.42em;
+    color:var(--uv-ink);font-family:var(--mono);font-size:0.6em;font-weight:500}
+  .gl[data-n]::after{content:attr(data-n)}
+  .gl-print{display:block}
+  .rv{opacity:1;transform:none}
+  .drw{stroke-dashoffset:0}
+  .pop,.fadein{opacity:1;transform:none}
+  .growy,.growx,.valbar div{transform:none}
+  .hl{opacity:1;transform:none}
+  .vcell::after,.ans-n::after{transform:none}
+  section,.viz,.mech,.machines,.risks,.kicker,.verdict,details,figure{break-inside:avoid}
+  .kicker,.ask{border:1.5px solid var(--uv)}
+  .kicker::before,.ask::before{display:none}
+  a{box-shadow:none}
+  .scroller{overflow:visible}
+  .scroller svg{min-width:0}
+}
+</style>
+</head>
+<body id="top">
+
+<button class="tt" id="themeBtn" type="button" aria-label="Switch colour theme">
+  <svg class="ic-l" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.4"/><path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.3 5.3l1.9 1.9M16.8 16.8l1.9 1.9M18.7 5.3l-1.9 1.9M7.2 16.8l-1.9 1.9"/></svg>
+  <svg class="ic-d" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.4A8.4 8.4 0 0 1 9.6 4 8.4 8.4 0 1 0 20 14.4Z"/></svg>
+  <span id="themeLbl">Theme</span>
+</button>
+
+<nav class="rail" aria-label="Sections">
+  <span class="rail-line"><i id="railFill"></i></span>
+  <a class="rail-item" href="#s1"><span class="glyph"><i style="width:22px"></i></span><span class="rl"><b>01</b>130 mm</span></a>
+  <a class="rail-item" href="#s2"><span class="glyph"><i style="width:36px"></i></span><span class="rl"><b>02</b>Resin</span></a>
+  <a class="rail-item" href="#s3"><span class="glyph"><i style="width:48px"></i></span><span class="rl"><b>03</b>Good enough</span></a>
+  <a class="rail-item" href="#s4"><span class="glyph"><i style="width:56px"></i></span><span class="rl"><b>04</b>Saturn 4</span></a>
+  <a class="rail-item" href="#s5"><span class="glyph"><i style="width:62px"></i></span><span class="rl"><b>05</b>30 sales</span></a>
+  <a class="rail-item" href="#s6"><span class="glyph"><i style="width:66px"></i></span><span class="rl"><b>06</b>Demand</span></a>
+  <a class="rail-item" href="#test"><span class="glyph"><i style="width:66px;height:15px"></i></span><span class="rl"><b>&rarr;</b>The test</span></a>
+</nav>
+
+<div class="mnav" id="mnav">
+  <div class="mnav-prog"><i id="mprog"></i></div>
+  <div class="mnav-strip">
+    <a class="mchip" href="#s1"><i></i>130 mm</a>
+    <a class="mchip" href="#s2"><i></i>Resin</a>
+    <a class="mchip" href="#s3"><i></i>Accuracy</a>
+    <a class="mchip" href="#s4"><i></i>Saturn 4</a>
+    <a class="mchip" href="#s5"><i></i>30 sales</a>
+    <a class="mchip" href="#s6"><i></i>Demand</a>
+    <a class="mchip" href="#test"><i></i>The test</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<header id="hd">
+  <div class="hero">
+    <div>
+      <p class="eyebrow"><span class="pip"></span>Decision memo &middot; Hyderabad &middot; July 2026</p>
+      <h1>Scanning faces with an iPhone and <em>printing them as &#8377;2,500 gifts</em></h1>
+      <p class="lede">Six questions, six answers, one page. Everything below the answers is evidence you can open if you want it.</p>
+
+      <div class="ctl-row">
+        <div class="modes" role="group" aria-label="Detail level">
+          <span class="thumb" id="mThumb"></span>
+          <button id="mSkim" class="on" type="button">Answers only</button>
+          <button id="mFull" type="button">Show all evidence</button>
+        </div>
+        <p class="modes-hint">40 seconds <i></i> 6 minutes</p>
+      </div>
+
+      <p class="gl-tip" id="glTip">
+        <i></i>
+        <span><b id="glTipN">14</b> uncommon words are marked like
+          <span class="gl" data-t="stereo">stereophotogrammetry</span> &mdash;
+          <b id="glTipVerb">hover</b> one for a plain definition, a Wikipedia line and a picture.</span>
+      </p>
+    </div>
+
+    <figure class="hero-fig">
+      <svg id="headSvg" class="ch" viewBox="0 0 460 476" role="img"
+           aria-label="A human head and bust drawn as stacked horizontal print layers, turned three-quarters, annotated 130 millimetres from crown to chin.">
+        <g id="headLayers"></g>
+        <g class="fadein" style="--d:1.2s">
+          <path class="dimline" d="M368 52 h20 M368 306 h20 M378 52 V160 M378 198 V306"/>
+          <path class="dimline" d="M373.5 57 L378 52 L382.5 57 M373.5 301 L378 306 L382.5 301" stroke-linejoin="round"/>
+          <text class="t-l c-uvt" x="378" y="177" text-anchor="middle">130</text>
+          <text class="t-s c-mut" x="378" y="191" text-anchor="middle">mm</text>
+        </g>
+      </svg>
+      <figcaption class="hero-cap">The object, drawn the way it is made: one <span class="gl" data-t="cured">cured</span> layer at a time</figcaption>
+    </figure>
+  </div>
+
+  <div class="verdict rv">
+    <div class="vhead">
+      <span>The answer, before the argument</span>
+      <span>01&ndash;06</span>
+    </div>
+    <div class="vgrid">
+      <div class="vcell" style="--d:.20s">
+        <span class="k">What we would sell</span>
+        <span class="v">130 mm bust</span>
+        <span class="d">Painted resin, roughly coffee-mug height, at &#8377;2,500. Sits mid-market: Indian sellers list &#8377;1,599&ndash;5,999.</span>
+      </div>
+      <div class="vcell" style="--d:.32s">
+        <span class="k">What it costs to start</span>
+        <span class="v num">&#8377;65,000</span>
+        <span class="d">Printer, wash and cure station, resin, safety kit, paints. All bought in Hyderabad. Nothing imported. Scanner is the phone we own.</span>
+      </div>
+      <div class="vcell" style="--d:.44s">
+        <span class="k">When it pays back</span>
+        <span class="v num">30 faces</span>
+        <span class="d">&#8377;265 of material per piece, &#8377;2,235 left over. About five weeks at one a day.</span>
+      </div>
+    </div>
+    <div class="ask">
+      <span class="tagn">Decide today</span>
+      <p><b>&#8377;7,000, not &#8377;65,000.</b> Scan ten faces this week, send them to a Hyderabad print service, pay per print, and try to sell the painted results. The machine is the second decision. The first one is whether anyone buys, and that is the only question this memo cannot answer from a desk.</p>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════ 01 SIZE ══════════════════ -->
+<section id="s1">
+  <div class="ans rv">
+    <span class="ans-n">01</span>
+    <div class="ans-b">
+      <p class="q">How big should the thing be?</p>
+      <h2><em>130 mm</em>, about the height of a coffee mug.</h2>
+      <p class="because">Not because it prints best, but because the printer is not what is scarce. <b>Our hands are.</b> Every piece needs the same scan repair, sanding and painting whether it is 50 mm or 130 mm, so the bigger piece earns far more for the same work.</p>
+    </div>
+  </div>
+
+  <figure class="viz rv">
+    <p class="viz-t">Four sizes drawn to true relative scale, against what each one earns per hour of hand-work</p>
+    <div class="scroller"><svg class="ch" viewBox="0 0 700 392" role="img" aria-label="Earnings per hour of hand-work rise with size, plotted above four bust silhouettes drawn at true relative scale. The 130 millimetre option is highlighted.">
+      <defs>
+        <path id="bust" d="M -30 0 L -30 -18 C -30 -34 -18 -40 -12 -44 C -18 -52 -19 -62 -19 -70 C -19 -88 -8 -97 0 -97 C 8 -97 19 -88 19 -70 C 19 -62 18 -52 12 -44 C 18 -40 30 -34 30 -18 L 30 0 Z"/>
+      </defs>
+
+      <rect class="c-band" x="326" y="6" width="110" height="326"/>
+      <rect class="c-uv" x="326" y="6" width="110" height="2"/>
+      <text class="t-s c-uvt" x="381" y="20" text-anchor="middle" letter-spacing="1.4">OUR SIZE</text>
+
+      <text class="t-s c-mut" x="8" y="52">EARNED PER HOUR</text>
+      <text class="t-s c-mut" x="8" y="64">OF HAND-WORK</text>
+      <path class="c-grid" d="M64 140 H676"/>
+      <path class="c-uvs drw" d="M110 133 L245 93 L381 78 L575 63" stroke-width="2"/>
+      <circle class="c-fig pop" cx="110" cy="133" r="4" style="--d:.55s"/>
+      <text class="c-mut" x="110" y="122" text-anchor="middle">&#8377;539</text>
+      <circle class="c-fig pop" cx="245" cy="93" r="4" style="--d:.75s"/>
+      <text class="c-mut" x="245" y="82" text-anchor="middle">&#8377;797</text>
+      <circle class="c-uv pop" cx="381" cy="78" r="6.5" style="--d:.95s"/>
+      <text class="t-xl c-uvt" x="381" y="63" text-anchor="middle">&#8377;894</text>
+      <circle class="c-am pop" cx="575" cy="63" r="4" style="--d:1.15s"/>
+      <text class="c-amt" x="575" y="52" text-anchor="middle">&#8377;1,007</text>
+
+      <path class="c-ax" d="M40 330 H676" stroke-width="1.2"/>
+
+      <!-- busts at true relative scale, 0.85 px per mm.
+           .growy sits on an OUTER g so it cannot clobber the transform attribute. -->
+      <g class="growy" style="--d:.15s"><g transform="translate(110,330) scale(0.438)"><use href="#bust" class="c-fig"/></g></g>
+      <g class="growy" style="--d:.30s"><g transform="translate(245,330) scale(0.789)"><use href="#bust" class="c-fig"/></g></g>
+      <g class="growy" style="--d:.45s"><g transform="translate(381,330) scale(1.139)"><use href="#bust" class="c-uv"/></g></g>
+      <g class="growy" style="--d:.60s"><g transform="translate(575,330) scale(1.577)"><use href="#bust" class="c-fig"/></g></g>
+
+      <g text-anchor="middle">
+        <text class="c-ink" x="110" y="348">50 mm</text><text class="t-s c-mut" x="110" y="361">keychain</text>
+        <text class="c-ink" x="245" y="348">90 mm</text><text class="t-s c-mut" x="245" y="361">desk piece</text>
+        <text class="t-l c-uvt" x="381" y="349">130 mm</text><text class="t-s c-uvt" x="381" y="362">gift statue</text>
+        <text class="c-ink" x="575" y="348">180 mm</text><text class="t-s c-mut" x="575" y="361">shelf statue</text>
+      </g>
+
+      <g class="fadein" style="--d:1.3s">
+        <path class="c-ams" d="M478 24 V330" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text class="c-amt" x="488" y="98">we stop here</text>
+        <text class="t-s c-amt" x="488" y="113">&#8377;2,500 is a gift price.</text>
+        <text class="t-s c-amt" x="488" y="126">&#8377;4,000 is not.</text>
+      </g>
+    </svg></div>
+    <p class="swipe">&rarr; swipe the chart</p>
+    <figcaption>A real adult head is about 230 mm chin to crown, so the 130 mm bust is roughly 57% of life size. Bigger keeps earning more per hour. It is the price ceiling, not the printer, that stops us.</figcaption>
+  </figure>
+
+  <details>
+    <summary>Why not print small? Fifteen keychains fit on a plate, only two busts do.</summary>
+    <div class="dbody">
+      <p>Because plate space is free and hands are not. The machine runs unattended overnight and burns about a rupee of electricity. Every finished piece then needs the same 2&ndash;3 hours of scan repair, support removal, sanding and painting regardless of its size.</p>
+      <p>Measured against the thing that is actually scarce (a person&rsquo;s hours), a keychain returns <strong>&#8377;539 an hour</strong> and a 130 mm bust returns <strong>&#8377;894</strong>. Fifteen small pieces per plate is fifteen times the sanding, not fifteen times the business.</p>
+      <p>One consequence to flag now: a 130 mm bust is about 79 mm wide, which will not fit the 77 mm-deep plate of a small Mars-class printer. Choosing this size forces the larger machine in answer 04.</p>
+      <p><strong>Full numbers.</strong> 50 mm: 11 ml resin, 15 per plate, 1.0 h work, &#8377;61 material, sell &#8377;600. 90 mm: 35 ml, 4 per plate, 1.7 h, &#8377;145, sell &#8377;1,500. 130 mm: 73 ml, 2 per plate, 2.5 h, &#8377;265, sell &#8377;2,500. 180 mm: 140 ml, 1 per plate, 3.5 h, &#8377;475, sell &#8377;4,000.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ══════════════════ 02 MACHINE TYPE ══════════════════ -->
+<section id="s2">
+  <div class="ans rv">
+    <span class="ans-n">02</span>
+    <div class="ans-b">
+      <p class="q">Which kind of 3D printer?</p>
+      <h2>Resin. It prints <em>three faces in the time filament prints one</em>.</h2>
+      <p class="because">A printer builds an object one flat slice at a time. Filament <b>draws</b> each slice line by line, so two faces take twice as long. Resin <b>flashes</b> the whole slice at once with UV light. The plate is either full or it isn&rsquo;t, and time barely moves in between.</p>
+    </div>
+  </div>
+
+  <div class="mech rv">
+    <div>
+      <span class="tagn a">Filament &middot; draws the slice</span>
+      <h3>A hot nozzle traces every line</h3>
+      <svg class="ch" viewBox="0 0 300 186" role="img" aria-label="A filament printer: a spool feeds plastic to a heated nozzle that draws each layer line by line onto a bed.">
+        <circle class="c-ax" cx="44" cy="38" r="22" stroke-width="1.6"/>
+        <circle class="c-fig" cx="44" cy="38" r="7"/>
+        <text class="t-s c-mut" x="44" y="76" text-anchor="middle">plastic spool</text>
+        <path class="c-ams drw" d="M66 38 C 106 38 110 54 132 60" stroke-width="1.8"/>
+        <path class="c-ax" d="M112 52 H268" stroke-width="2.6"/>
+        <rect class="c-ink" x="128" y="57" width="32" height="26"/>
+        <path class="c-am" d="M144 83 L138 94 L150 94 Z"/>
+        <text class="t-s c-mut" x="144" y="48" text-anchor="middle">hot nozzle</text>
+        <g stroke-linecap="round" stroke-dasharray="7 5">
+          <path class="c-ams drw" d="M62 124 h116" stroke-width="3" style="transition-delay:.30s"/>
+          <path class="c-ams drw" d="M62 132 h96"  stroke-width="3" opacity=".62" style="transition-delay:.45s"/>
+          <path class="c-ams drw" d="M62 140 h130" stroke-width="3" opacity=".62" style="transition-delay:.60s"/>
+        </g>
+        <rect class="c-fig" x="50" y="148" width="180" height="7"/>
+        <text class="t-s c-mut" x="140" y="174" text-anchor="middle">one line at a time, layer after layer</text>
+      </svg>
+      <p><b>Two faces take twice as long.</b> Leaves faint horizontal ridges across a cheek, visible on skin.</p>
+    </div>
+    <div>
+      <span class="tagn u">Resin &middot; flashes the whole slice</span>
+      <h3>A screen masks it, UV cures it all at once</h3>
+      <svg class="ch" viewBox="0 0 300 186" role="img" aria-label="A resin printer: UV light shines up through an LCD mask into a vat of liquid resin, curing a whole layer at once onto a build plate that lifts.">
+        <defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" fill="var(--grey)"/></marker></defs>
+        <rect class="c-fig" x="88" y="24" width="124" height="7"/>
+        <path class="c-ax" d="M150 31 V18" stroke-width="4.5"/>
+        <path class="c-ax" d="M150 18 V6" stroke-width="1.4" marker-end="url(#ah)"/>
+        <text class="t-s c-mut" x="218" y="20">plate lifts</text>
+        <rect class="c-uv pop" x="112" y="31" width="76" height="12" style="--d:.55s"/>
+        <text class="t-s c-uvt" x="150" y="54" text-anchor="middle">whole layer, cured at once</text>
+        <rect class="c-dead" x="66" y="66" width="168" height="48"/>
+        <path class="c-ax" d="M64 64 h172 v52 h-172 z" stroke-width="1.8"/>
+        <text class="t-s c-mut" x="150" y="96" text-anchor="middle">liquid resin</text>
+        <rect class="c-ink" x="64" y="118" width="172" height="9"/>
+        <text class="t-s c-mut" x="248" y="125">LCD mask</text>
+        <g class="c-uvs" stroke-width="2">
+          <path class="drw" d="M118 150 V130" style="transition-delay:.20s"/>
+          <path class="drw" d="M134 150 V130" style="transition-delay:.26s"/>
+          <path class="drw" d="M150 150 V130" style="transition-delay:.32s"/>
+          <path class="drw" d="M166 150 V130" style="transition-delay:.38s"/>
+          <path class="drw" d="M182 150 V130" style="transition-delay:.44s"/>
+        </g>
+        <rect class="c-uv" x="98" y="152" width="104" height="8"/>
+        <text class="t-s c-mut" x="150" y="176" text-anchor="middle">UV light source</text>
+      </svg>
+      <p><b>Three faces take exactly as long as one.</b> Surface comes out smooth, with no ridges to sand off skin.</p>
+    </div>
+  </div>
+
+  <figure class="viz rv">
+    <p class="viz-t">Time to deliver, both machines on one 72-hour clock</p>
+    <div class="tp-head">
+      <label for="qty">Orders to deliver tonight, at 130 mm</label>
+      <span class="tp-count num" id="qtyOut">4 <small>faces</small></span>
+    </div>
+    <input id="qty" type="range" min="1" max="12" value="4" step="1" aria-label="Number of faces to print tonight">
+    <div class="tp-ticks"><span>1</span><span>4</span><span>8</span><span>12 orders</span></div>
+
+    <div class="row">
+      <div class="row-top">
+        <span class="name"><i style="background:var(--amber)"></i>Filament: draws each face in turn</span>
+        <span class="val num" id="fdmVal">24 h 00 m</span>
+      </div>
+      <div class="track">
+        <span class="nightband" style="width:16.667%"></span>
+        <div class="fill fdm" id="fdmBar"></div>
+        <span class="nightedge" style="left:16.667%"></span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-top">
+        <span class="name"><i style="background:var(--uv)"></i>Resin: flashes 2 per plate</span>
+        <span class="val num" id="resVal">3 h 40 m</span>
+      </div>
+      <p class="nightlbl">&larr; the 12-hour overnight window</p>
+      <div class="track">
+        <span class="nightband" style="width:16.667%"></span>
+        <div class="fill res" id="resBar"><span class="plate-seps" id="plateSeps"></span></div>
+        <span class="nightedge" style="left:16.667%"></span>
+      </div>
+      <div class="axis" id="tpAxis"></div>
+    </div>
+
+    <p class="tp-note" id="tpNote"></p>
+    <figcaption>Drag the slider. Filament rises in a straight line with orders; resin climbs in steps, one step per plateful of two. That asymmetry is the whole operational case. It is what lets one person take a weekend of orders.</figcaption>
+  </figure>
+
+  <details>
+    <summary>Watch it work: three videos, plain language</summary>
+    <div class="dbody">
+      <p><a href="https://www.youtube.com/watch?v=UU6tWhV010M" target="_blank" rel="noopener">Resin printing, start to finish</a>. 24 min covering <span class="gl" data-t="slicing">slicing</span>, printing, washing, curing, supports and safety. The one to watch if you watch one.</p>
+      <p><a href="https://www.youtube.com/watch?v=i2O9SeNOCLA" target="_blank" rel="noopener">How a resin 3D printer works</a>. The vat, screen and lifting plate.</p>
+      <p><a href="https://www.youtube.com/watch?v=CNdqu3C9UAk" target="_blank" rel="noopener">SLA, DLP and MSLA compared</a>. Why the affordable machines use an LCD screen.</p>
+      <p><strong>Assumptions.</strong> 130 mm hollow bust, 2 mm walls. Resin at 0.05 mm layers, about 2.5 s per layer on a modern <span class="gl" data-t="tilt">tilt-release</span> machine, two per Saturn-class plate. Filament at 0.16 mm layers on a fast machine, about six hours each. A 130 mm head sliced at 0.05 mm is 2,600 slices.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ══════════════════ 03 ACCURACY ══════════════════ -->
+<section id="s3">
+  <div class="ans rv">
+    <span class="ans-n">03</span>
+    <div class="ans-b">
+      <p class="q">Is an iPhone scan accurate enough?</p>
+      <h2>Yes, and it is <em>the weak link</em>, which is why we buy plate size, not resolution.</h2>
+      <p class="because">The phone lands about 0.86 mm off a clinical scanner. Shrunk to 57% of life size that becomes <b>0.49 mm on the statue</b>, and <span class="gl" data-t="primer">primer</span> fills another 0.1 mm. Every resin printer on the market already resolves ten to thirty times finer than that.</p>
+    </div>
+  </div>
+
+  <figure class="viz rv">
+    <p class="viz-t">Everything on one scale: the finest detail each thing can hold, in millimetres</p>
+    <div class="scroller"><svg class="ch" viewBox="0 0 740 300" role="img" aria-label="A logarithmic scale from 0.01 to 1 millimetre showing that the iPhone scan at 0.49 millimetres is far coarser than any resin printer resolution.">
+      <!-- x = 74 + 300 * log10(mm / 0.01) -->
+      <rect class="c-dead" x="74" y="34" width="507" height="128"/>
+      <text class="c-mut" x="327" y="54" text-anchor="middle">detail no phone scan can supply, so paying for it buys nothing</text>
+
+      <path class="c-ax" d="M74 162 H690" stroke-width="1.2"/>
+      <path class="c-ax" d="M74 162 v6 M284 162 v6 M374 162 v6 M584 162 v6 M674 162 v6"/>
+      <text class="t-s c-mut" x="690" y="196" text-anchor="end">coarser &rarr;</text>
+
+      <path class="c-ax" d="M143 162 V142 M188 162 V124 M284 162 V106" stroke-width="1.4"/>
+      <circle class="c-fig pop" cx="143" cy="142" r="3.5" style="--d:.40s"/>
+      <text class="t-s c-mut" x="135" y="139" text-anchor="end">14K screen &#160;0.017</text>
+      <circle class="c-fig pop" cx="188" cy="124" r="3.5" style="--d:.50s"/>
+      <text class="t-s c-mut" x="180" y="121" text-anchor="end">9K screen &#160;0.024</text>
+      <circle class="c-fig pop" cx="284" cy="106" r="3.5" style="--d:.60s"/>
+      <text class="t-s c-mut" x="276" y="103" text-anchor="end">resin layer &#160;0.05</text>
+
+      <path class="c-ams drw" d="M435 162 V210" stroke-width="1.5" style="transition-delay:.50s"/>
+      <circle class="c-am pop" cx="435" cy="210" r="4.5" style="--d:.85s"/>
+      <text class="c-amt" x="424" y="208" text-anchor="end">filament ridge 0.16, visible on skin</text>
+
+      <path class="c-uvs drw" d="M581 162 V244" stroke-width="2.2" style="transition-delay:.65s"/>
+      <circle class="c-uv pop" cx="581" cy="244" r="7" style="--d:1.05s"/>
+      <text class="t-l c-uvt" x="568" y="241" text-anchor="end">iPhone scan at print size: 0.49</text>
+      <g class="fadein" style="--d:1.20s">
+        <path class="c-uvs" d="M655 162 V244" stroke-width="1.4" stroke-dasharray="4 3" opacity=".55"/>
+        <circle class="c-uv" cx="655" cy="244" r="4" opacity=".55"/>
+        <text class="t-s c-mut" x="666" y="248">0.86</text>
+        <text class="t-s c-mut" x="666" y="260" opacity=".75">life size</text>
+      </g>
+
+      <g class="fadein" style="--d:1.35s">
+        <path class="c-reds" d="M143 22 H188 M143 16 V28 M188 16 V28" stroke-width="1.3"/>
+        <text class="t-s c-red" x="198" y="26">&#8377;10,000 extra buys this gap</text>
+      </g>
+
+      <!-- axis labels last: the descending markers must not paint over them -->
+      <g class="c-mut" text-anchor="middle">
+        <rect class="c-pane" x="568" y="169" width="32" height="15"/>
+        <rect class="c-pane" x="658" y="169" width="32" height="15"/>
+        <text class="t-s" x="74" y="180">0.01</text><text class="t-s" x="284" y="180">0.05</text>
+        <text class="t-s" x="374" y="180">0.1</text><text class="t-s" x="584" y="180">0.5</text>
+        <text class="t-s" x="674" y="180">1.0</text>
+      </g>
+    </svg></div>
+    <p class="swipe">&rarr; swipe the chart</p>
+    <figcaption>Scale is logarithmic. The phone sets the floor for everything, so resolution above a 9K or 12K screen is money spent on detail the scan cannot feed and the eye cannot see.</figcaption>
+  </figure>
+
+  <details>
+    <summary>Where resin still beats filament, and what the scan always breaks</summary>
+    <div class="dbody">
+      <p>Resin earns its price over filament on <strong>surface, not accuracy</strong>. Filament leaves visible horizontal ridges across a cheek; resin does not. On raw dimensional accuracy both are already finer than the phone.</p>
+      <p>Scan quality is not uniform across a face. Skin and bone structure come out well. <strong>Hair, spectacle frames and thin jewellery break every time</strong> and have to be rebuilt by hand in <span class="gl" data-t="blender">Blender</span>. Budget 25 minutes a face for this. That skill lives in the software, not in the machine.</p>
+      <p>The 0.86 mm figure is from a clinical validation of iPhone <span class="gl" data-t="truedepth">TrueDepth</span> against a 3dMD <span class="gl" data-t="stereo">stereophotogrammetry</span> system, with 97% of facial landmarks inside 2 mm.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ══════════════════ 04 WHICH MACHINE ══════════════════ -->
+<section id="s4">
+  <div class="ans rv">
+    <span class="ans-n">04</span>
+    <div class="ans-b">
+      <p class="q">Which printer, and can we get it here?</p>
+      <h2><em>Elegoo Saturn 4 Ultra, &#8377;37,000</em>, on a shelf in Uppal.</h2>
+      <p class="because">It is the smallest machine whose plate actually fits the size we decided to sell. Elegoo, Anycubic and Bambu all ship through Indian resellers with GST invoices and run on 220&nbsp;V. <b>Nothing here needs importing.</b></p>
+    </div>
+  </div>
+
+  <div class="machines rv">
+    <div class="mach pick">
+      <span class="verdictline"><i></i>Buy this</span>
+      <h3>Elegoo Saturn 4 Ultra</h3>
+      <p class="spec">resin &middot; 12K &middot; 218&times;123&times;220 mm</p>
+      <p class="price num">&#8377;35&ndash;40,000</p>
+      <svg class="ch" viewBox="0 0 160 92" style="max-width:162px" role="img" aria-label="Top view of the Saturn build plate, with two 130 millimetre bust footprints fitting side by side.">
+        <rect class="c-pane" x="8" y="18" width="124" height="68" stroke="var(--uv)" stroke-width="1.5"/>
+        <ellipse class="c-uv" cx="43" cy="52" rx="23" ry="17" opacity=".82"/>
+        <ellipse class="c-uv" cx="97" cy="52" rx="23" ry="17" opacity=".82"/>
+        <path class="c-uvs" d="M8 12 H132 M8 8 V16 M132 8 V16"/>
+        <text class="t-s c-uvt" x="70" y="6" text-anchor="middle">218 mm</text>
+        <text class="t-s c-uvt" x="138" y="55">123</text>
+      </svg>
+      <p class="why">Two 130 mm busts per plate, printed overnight together. Everything in this memo assumes this machine.</p>
+      <a class="vid" href="https://www.youtube.com/watch?v=cEImoNLCHgI" target="_blank" rel="noopener">&#9654;&#160; honest review</a>
+    </div>
+
+    <div class="mach no">
+      <span class="verdictline"><i></i>Too small by 2 mm</span>
+      <h3>Elegoo Mars 5 / 4 Ultra</h3>
+      <p class="spec">resin &middot; 9K &middot; 153&times;77&times;165 mm</p>
+      <p class="price num">&#8377;22&ndash;25,000</p>
+      <svg class="ch" viewBox="0 0 160 92" style="max-width:162px" role="img" aria-label="Top view of the Mars build plate, with a 130 millimetre bust footprint overflowing the 77 millimetre depth.">
+        <rect class="c-pane" x="8" y="30" width="86" height="42" stroke="var(--line-2)" stroke-width="1.5"/>
+        <ellipse class="c-red" cx="51" cy="51" rx="23" ry="24" opacity=".5"/>
+        <path class="c-reds" d="M28 27 h46 M28 75 h46" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <text class="t-s c-red" x="51" y="20" text-anchor="middle">79 mm wide</text>
+        <text class="t-s c-mut" x="102" y="54">77 deep</text>
+      </svg>
+      <p class="why">&#8377;13,000 cheaper and caps us at 90 mm pieces forever, which costs &#8377;1,000 of margin on every single sale. False economy.</p>
+    </div>
+
+    <div class="mach alt">
+      <span class="verdictline"><i></i>Later, for a different job</span>
+      <h3>Bambu Lab A1</h3>
+      <p class="spec">filament &middot; 256&times;256&times;256 mm</p>
+      <p class="price num">&#8377;30,900</p>
+      <svg class="ch" viewBox="0 0 160 92" style="max-width:162px" role="img" aria-label="Icons for a display base, a name plaque and a packing jig.">
+        <rect class="c-am" x="12" y="54" width="38" height="16" opacity=".72"/>
+        <rect class="c-am" x="18" y="46" width="26" height="8" opacity=".42"/>
+        <text class="t-s c-amt" x="31" y="84" text-anchor="middle">base</text>
+        <rect class="c-am" x="62" y="48" width="42" height="22" opacity=".52"/>
+        <path d="M68 56 h30 M68 62 h20" fill="none" stroke="var(--panel)" stroke-width="2"/>
+        <text class="t-s c-amt" x="83" y="84" text-anchor="middle">plaque</text>
+        <path class="c-ams" d="M116 70 v-22 h30 v22" stroke-width="3" opacity=".72"/>
+        <text class="t-s c-amt" x="131" y="84" text-anchor="middle">jig</text>
+      </svg>
+      <p class="why">Wrong tool for skin, right tool for display bases, name plaques and packing <span class="gl" data-t="jig">jigs</span>. Not part of the &#8377;65,000.</p>
+    </div>
+  </div>
+
+  <figure class="viz rv">
+    <p class="viz-t">What the &#8377;65,000 actually buys. Hover a line to isolate it</p>
+    <div class="valbar" id="bar65">
+      <div data-seg="0" style="width:56.92%;background:#5B3FD1;color:#fff;--d:0s">&#8377;37,000</div>
+      <div data-seg="1" style="width:21.54%;background:#7C63DD;color:#fff;--d:.09s">&#8377;14,000</div>
+      <div data-seg="2" style="width:6.15%;background:#9D89E8;--d:.18s"></div>
+      <div data-seg="3" style="width:6.15%;background:#C88A1E;--d:.27s"></div>
+      <div data-seg="4" style="width:4.62%;background:#DFAE60;--d:.36s"></div>
+      <div data-seg="5" style="width:4.62%;background:var(--grey-2);--d:.45s"></div>
+    </div>
+    <div class="legend" id="leg65">
+      <div class="lg" data-seg="0"><span class="dot" style="background:#5B3FD1"></span>Elegoo Saturn 4 Ultra <b>&#8377;37,000</b></div>
+      <div class="lg" data-seg="1"><span class="dot" style="background:#7C63DD"></span>Wash and cure station <b>&#8377;14,000</b></div>
+      <div class="lg" data-seg="2"><span class="dot" style="background:#9D89E8"></span>2 L resin to start <b>&#8377;4,000</b></div>
+      <div class="lg" data-seg="3"><span class="dot" style="background:#C88A1E"></span>Voltage stabiliser <b>&#8377;4,000</b></div>
+      <div class="lg" data-seg="4"><span class="dot" style="background:#DFAE60"></span>Gloves, respirator, trays, IPA <b>&#8377;3,000</b></div>
+      <div class="lg" data-seg="5"><span class="dot" style="background:var(--grey-2)"></span>Sanding, primer, acrylics, brushes <b>&#8377;3,000</b></div>
+      <div class="lg" data-seg="6"><span class="dot" style="background:var(--green)"></span>Scanner: the phone we own <b>&#8377;0</b></div>
+    </div>
+  </figure>
+
+  <details>
+    <summary>Also priced, and rejected, including the machine our competitors use</summary>
+    <div class="dbody">
+      <p><strong>Anycubic Photon Mono M7 Pro</strong>, resin 14K, 223&times;126&times;230 mm, &#8377;35&ndash;45,000. Same job as the Saturn, more money for resolution the scan cannot feed. <a href="https://www.youtube.com/results?search_query=Anycubic+Photon+Mono+M7+Pro+review" target="_blank" rel="noopener">reviews</a></p>
+      <p><strong>Bambu Lab P1S</strong>, enclosed filament, &#8377;52,000. Built for engineering plastics we would never use. <a href="https://www.youtube.com/results?search_query=Bambu+Lab+P1S+review" target="_blank" rel="noopener">reviews</a></p>
+      <p><strong>Full-colour sandstone (<span class="gl" data-t="binder">binder jetting</span>)</strong>, &#8377;25 lakh and up. This is what the existing 3D-selfie firms use. Out of reach. If a customer insists on printed colour, we outsource that order. <a href="https://www.youtube.com/results?search_query=full+colour+binder+jetting+3D+printed+figurine" target="_blank" rel="noopener">see the process</a></p>
+      <p><strong>Where to buy.</strong> KSP Electronics has a store in Uppal; Robocraze, WOL3D and DIY3D ship pan-India with GST invoices. Resin refills run &#8377;1,250&ndash;3,000 per litre. Water-washable resin at the low end removes <span class="gl" data-t="ipa">isopropyl alcohol</span> from the process entirely, which matters more for safety than for cost.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ══════════════════ 05 COSTS ══════════════════ -->
+<section id="s5">
+  <div class="ans rv">
+    <span class="ans-n">05</span>
+    <div class="ans-b">
+      <p class="q">What does one face cost, and when does it pay back?</p>
+      <h2><em>&#8377;265 of material</em> sells for &#8377;2,500. Thirty sales clear the setup.</h2>
+      <p class="because">Material is almost noise. The real cost is <b>2.5 hours of hand-work per piece</b>, and that is also the ceiling on how many we can sell in a week. The printer runs itself overnight; the finishing does not.</p>
+    </div>
+  </div>
+
+  <figure class="viz rv">
+    <p class="viz-t">One sale at &#8377;2,500, and what the 11% is made of</p>
+    <div class="scroller"><svg class="ch" viewBox="0 0 700 212" role="img" aria-label="A bar showing 265 rupees of materials as 11 percent of the 2,500 rupee price, expanded below into resin 146, consumables 35, failed prints 30 and box and packing 54 rupees.">
+      <text class="t-s c-uvt" x="0" y="16">&#8377;265 MATERIALS &middot; 11%</text>
+      <text class="t-s c-mut" x="700" y="16" text-anchor="end">&#8377;2,500 PRICE</text>
+
+      <g class="growx">
+        <rect class="c-uv" x="0" y="24" width="74.2" height="38"/>
+        <rect class="c-dead" x="74.2" y="24" width="625.8" height="38"/>
+      </g>
+      <text class="c-ink fadein" style="--d:.55s" x="90" y="48">&#8377;2,235 left after materials</text>
+
+      <path class="c-band fadein" style="--d:.55s" d="M0 62 L74.2 62 L700 106 L0 106 Z" opacity=".6"/>
+      <path class="c-uvs fadein" style="--d:.55s" d="M0 62 V106 M74.2 62 L700 106" stroke-dasharray="3 3"/>
+
+      <g class="fadein" style="--d:.75s">
+        <rect class="c-uv" x="0" y="106" width="385.7" height="38"/>
+        <rect x="385.7" y="106" width="92.5" height="38" fill="#7C63DD"/>
+        <rect x="478.2" y="106" width="79.2" height="38" fill="#9D89E8"/>
+        <rect x="557.4" y="106" width="142.6" height="38" fill="#B9A6EE"/>
+        <text class="t-s c-white" x="14" y="130" letter-spacing="1.2">EVERY RUPEE OF MATERIAL, ENLARGED</text>
+      </g>
+
+      <g class="fadein" style="--d:.95s" text-anchor="middle">
+        <path class="c-ax" d="M192 144 v10 M431 144 v10 M517 144 v10 M628 144 v10"/>
+        <text class="t-s c-mut" x="192" y="168">Resin, 73 ml</text><text class="c-uvt" x="192" y="184">&#8377;146</text>
+        <text class="t-s c-mut" x="431" y="168">Consumables</text><text class="c-uvt" x="431" y="184">&#8377;35</text>
+        <text class="t-s c-mut" x="517" y="168">Failed prints</text><text class="c-uvt" x="517" y="184">&#8377;30 &middot; 15%</text>
+        <text class="t-s c-mut" x="628" y="168">Box + packing</text><text class="c-uvt" x="628" y="184">&#8377;54</text>
+      </g>
+      <text class="t-s c-mut" x="0" y="206" opacity=".85">film wear is inside consumables</text>
+    </svg></div>
+    <p class="swipe">&rarr; swipe the chart</p>
+
+    <div class="hands">
+      <span class="big num">2 h 30 m<small>of hands, per piece</small></span>
+      <p>25 min rebuilding the <span class="gl" data-t="mesh">mesh</span> where hair and glasses broke, 20 min removing <span class="gl" data-t="supports">supports</span> and washing, 30 min sanding and priming, 75 min painting. Electricity for the whole overnight plate is under a rupee. Work it out and the piece pays about <b>&#8377;894 an hour</b> to whoever finishes it.</p>
+    </div>
+  </figure>
+
+  <figure class="viz rv">
+    <p class="viz-t">Cumulative cash, at &#8377;2,235 a sale</p>
+    <div class="scroller"><svg id="cashSvg" class="ch" viewBox="0 0 700 268" role="img" aria-label="A cumulative cash staircase starting at minus 65,000 rupees and crossing zero at the thirtieth face sold, about five weeks in.">
+      <rect class="c-band-a" x="60" y="86" width="600" height="134" opacity=".5"/>
+      <rect class="c-band" x="60" y="32" width="600" height="54" opacity=".75"/>
+      <path class="c-grid" d="M60 32 V220"/>
+      <path id="cashFill" class="c-uv" d="" opacity=".13"/>
+      <path class="c-ax" d="M60 86 H660" stroke-width="1.2"/>
+      <path id="cashLine" class="c-uvs drw" d="" stroke-width="2.2" stroke-linejoin="round"/>
+      <g class="fadein" style="--d:1.15s">
+        <path class="c-uvs" d="M510 86 V236" stroke-dasharray="3 3"/>
+        <circle cx="510" cy="86" r="11.5" fill="none" stroke="var(--uv)" stroke-width="1" opacity=".45"/>
+        <circle class="c-uv" cx="510" cy="86" r="6"/>
+        <text class="t-l c-uvt" x="496" y="62" text-anchor="end">the 30th sale clears it</text>
+        <text class="t-s c-mut" x="496" y="76" text-anchor="end">about 5 weeks at one a day</text>
+      </g>
+      <g class="c-mut">
+        <text class="t-s" x="52" y="36" text-anchor="end">+&#8377;24,000</text>
+        <text class="t-s" x="52" y="90" text-anchor="end">&#8377;0</text>
+        <text class="t-s" x="52" y="223" text-anchor="end">&ndash;&#8377;65,000</text>
+        <text class="t-s" x="62" y="240">0</text>
+        <text class="t-s c-uvt" x="510" y="252" text-anchor="middle">30 faces sold</text>
+        <text class="t-s" x="658" y="240" text-anchor="end">40</text>
+        <text class="t-s c-amt" x="94" y="196">money out</text>
+        <text class="t-s c-uvt" x="650" y="78" text-anchor="end">money in</text>
+      </g>
+    </svg></div>
+    <p class="swipe">&rarr; swipe the chart</p>
+    <figcaption>Existing Indian sellers list 3D selfies between &#8377;1,599 and &#8377;5,999, so &#8377;2,500 for a painted 130 mm piece sits mid-market rather than at the top. Payback assumes we can sell thirty, which is exactly the assumption the test at the end is designed to break.</figcaption>
+  </figure>
+</section>
+
+<!-- ══════════════════ 06 RISKS ══════════════════ -->
+<section id="s6">
+  <div class="ans rv">
+    <span class="ans-n">06</span>
+    <div class="ans-b">
+      <p class="q">What could go wrong?</p>
+      <h2>The risk is <span class="warn">demand, not the technology</span>.</h2>
+      <p class="because">A firm in Rangareddy already sells 3D selfies at &#8377;3,599, with others in Chennai and Delhi. <b>The idea is not new and nobody has scaled it.</b> That is the fact worth understanding before assuming we would.</p>
+    </div>
+  </div>
+
+  <div class="risks rv">
+    <div class="risk">
+      <span class="lvl"><span class="meter"><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i></span>Kills the business</span>
+      <h3>Nobody buys</h3>
+      <p>Competitors exist and stay small. Either the market is thin or the product is a novelty people admire and do not purchase.</p>
+    </div>
+    <div class="risk">
+      <span class="lvl"><span class="meter"><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i></span>Kills the business</span>
+      <h3>We are not selling what they sell</h3>
+      <p>The market sells full-colour <span class="gl" data-t="gypsum">gypsum</span> from &#8377;25 lakh machines. We would sell grey resin with paint on it. That can be a better object if sold as a bronze or marble sculpture, but never as the same thing.</p>
+    </div>
+    <div class="risk">
+      <span class="lvl"><span class="meter"><i style="background:var(--amber)"></i><i style="background:var(--amber)"></i><i></i></span>Costs us time</span>
+      <h3>Hair and glasses break every scan</h3>
+      <p><span class="gl" data-t="truedepth">Infrared depth sensing</span> fails on dark hair, spectacle frames and thin jewellery. Every scan needs hand sculpting in Blender before it can print. Someone has to learn that.</p>
+    </div>
+    <div class="risk">
+      <span class="lvl"><span class="meter"><i style="background:var(--amber)"></i><i style="background:var(--amber)"></i><i></i></span>Health</span>
+      <h3>Resin is a <span class="gl" data-t="sensitiser">sensitiser</span></h3>
+      <p>Uncured resin causes skin allergies that get worse with exposure, and fumes need real ventilation. This lives in a utility room with an exhaust fan, not on a dining table.</p>
+    </div>
+    <div class="risk">
+      <span class="lvl"><span class="meter"><i style="background:var(--grey)"></i><i></i><i></i></span>Budgeted, but surprises people</span>
+      <h3>The screen is a consumable</h3>
+      <p>LCD panels last 2,000&ndash;4,000 hours and cost &#8377;3,000&ndash;8,000 to replace. Plan on one a year at volume.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ THE TEST ══════════════════ -->
+<section id="test" style="border-top:0;padding-top:0">
+  <div class="kicker rv">
+    <p class="eyebrow"><span class="pip"></span>The only decision on the table today</p>
+    <h2>Spend <em>&#8377;7,000</em> and find out, before spending &#8377;65,000.</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="n"><em>1</em>this week</span>
+        <b>Scan ten faces</b>
+        <p>On the phone we already own. Friends, family, anyone who will sit still for a minute.</p>
+      </div>
+      <div class="step">
+        <span class="n"><em>2</em>&#8377;700 each</span>
+        <b>Print them out of house</b>
+        <p>Several Hyderabad print services take an upload and quote back. No machine, no resin, no utility room.</p>
+      </div>
+      <div class="step">
+        <span class="n"><em>3</em>the real test</span>
+        <b>Ask &#8377;2,500 for them</b>
+        <p>Paint them properly first. Then find out whether a real person hands over real money for the finished thing.</p>
+      </div>
+    </div>
+    <div class="rule">
+      <div><span class="h"><i></i>If they buy</span>The &#8377;65,000 machine pays for itself inside two months, and we should buy it that day. Every number in this memo becomes live.</div>
+      <div><span class="h"><i></i>If they do not</span>We are out &#8377;7,000 and a fortnight, and we have learned the thing that actually mattered. The printer was never the missing piece.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="flbl">Sources, assumptions and error bars</span>
+  <p>Prices are India market rates including 18% GST, mid-2026, and drift. Print times assume a modern tilt-release resin machine. Scan accuracy is from a clinical validation of iPhone TrueDepth against a 3dMD stereophotogrammetry system. Resin volumes are estimated from the surface area of a hollow 2 mm shell plus 20% for supports. Costs cover materials and consumables only. Labour is stated in hours rather than rupees throughout, deliberately, because it is the constraint rather than a line item.</p>
+</footer>
+
+<!-- built by JS from the glossary data; only ever seen on paper -->
+<aside class="gl-print" id="glPrint" aria-hidden="true">
+  <span class="glp-k">The marked words</span>
+  <ol></ol>
+</aside>
+
+</div>
+
+<!-- ══════════════════ GLOSSARY CARD ══════════════════ -->
+<div class="glc-scrim" id="glScrim"></div>
+
+<aside class="glc" id="glCard" role="dialog" aria-modal="false" aria-labelledby="glcTerm" tabindex="-1">
+  <span class="glc-notch" id="glNotch"></span>
+  <button class="glc-x" id="glClose" type="button" aria-label="Close definition">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>
+  </button>
+  <div class="glc-in">
+    <figure class="glc-fig" id="glFig" aria-hidden="true"></figure>
+    <div>
+      <p class="glc-k"><i></i><span id="glcTag">glossary</span></p>
+      <h4 class="glc-t" id="glcTerm"></h4>
+      <p class="glc-o" id="glcOurs"></p>
+      <div class="glc-w" id="glcWrap">
+        <span>Wikipedia</span>
+        <p id="glcWiki"></p>
+        <p class="glc-sk" id="glcSk" aria-hidden="true"><i></i><i></i><i></i></p>
+      </div>
+    </div>
+  </div>
+  <div class="glc-f">
+    <a id="glcLink" href="#" target="_blank" rel="noopener">Read on Wikipedia &nearr;</a>
+    <span class="src" id="glcSrc">This memo&rsquo;s own term</span>
+    <span class="kb"><b>esc</b> to close</span>
+  </div>
+</aside>
+
+<!-- one-time coachmark, anchored to the marked word in the hero -->
+<aside class="glh" id="glHint" data-side="above" role="status">
+  <span class="glh-notch"></span>
+  <p id="glHintTxt"><b>Hover this word.</b> Every word marked with a dotted rule and a small square opens a short definition and a picture.</p>
+  <div class="glh-r">
+    <span class="glh-k"><i></i>14 words</span>
+    <button type="button" id="glHintX">Got it</button>
+  </div>
+</aside>
+
+<!-- ══════════════════ NARROW-SCREEN GATE ══════════════════ -->
+<div class="gate" id="gate" role="alertdialog" aria-labelledby="gateH">
+  <div class="gate-in">
+    <div class="gate-card">
+      <div class="gate-h">
+        <span><span class="pip"></span>Decision memo</span>
+        <span>Hyderabad &middot; 2026</span>
+      </div>
+      <div class="gate-b">
+        <svg class="ch gate-fig" viewBox="0 0 320 150" role="img"
+             aria-label="A chart clipped by a narrow phone screen beside the same chart fitting inside a desktop screen.">
+          <defs><clipPath id="gateClip"><rect x="15" y="27" width="57" height="100"/></clipPath></defs>
+
+          <!-- phone: the same chart, cut off -->
+          <rect class="c-pane" x="15" y="27" width="57" height="100" stroke="var(--line-2)" stroke-width="1.4"/>
+          <path class="c-ax" d="M35 33 h17" stroke-width="1.6" stroke-linecap="round"/>
+          <g clip-path="url(#gateClip)">
+            <rect class="c-fig" x="23" y="52" width="86" height="8"/>
+            <rect class="c-red" x="23" y="68" width="104" height="8" opacity=".62"/>
+            <rect class="c-fig" x="23" y="84" width="72" height="8"/>
+            <rect class="c-fig-2" x="23" y="100" width="95" height="8"/>
+          </g>
+          <path class="c-reds" d="M72 44 V118" stroke-width="1.4" stroke-dasharray="4 3"/>
+          <text class="t-s c-red" x="43" y="143" text-anchor="middle">clipped</text>
+
+          <path class="c-ax" d="M88 77 H116" stroke-width="1.2"/>
+          <path class="c-mut" d="M116 73 L124 77 L116 81 Z"/>
+
+          <!-- desktop: room for it -->
+          <rect class="c-pane" x="140" y="24" width="165" height="94" stroke="var(--uv)" stroke-width="1.5"/>
+          <path class="c-ax" d="M222 118 v10 M203 128 h38" stroke-width="1.6" stroke-linecap="round"/>
+          <path class="c-ax" d="M148 40 h149" stroke-width="1" stroke-dasharray="2 4"/>
+          <rect class="c-fig" x="148" y="50" width="86" height="8"/>
+          <rect class="c-uv" x="148" y="66" width="104" height="8"/>
+          <rect class="c-fig" x="148" y="82" width="72" height="8"/>
+          <rect class="c-fig-2" x="148" y="98" width="95" height="8"/>
+          <text class="t-s c-uvt" x="222" y="143" text-anchor="middle">fits</text>
+        </svg>
+
+        <h2 id="gateH">This memo is <em>drawn to scale</em>. It needs a wider screen.</h2>
+        <p class="gate-p">Four bust sizes at true relative scale, a logarithmic accuracy axis, a 72-hour clock. Squeezed below <b>768 px</b> these charts stop being readable &mdash; so this page would rather not render than mislead you.</p>
+
+        <div class="gate-m">
+          <div class="gate-mt"><span>This screen</span><b class="num" id="gateW">&mdash;</b></div>
+          <div class="gate-tr"><div class="gate-fl" id="gateFill"></div><span class="gate-need"></span></div>
+          <div class="gate-mb"><span>0</span><span><b>768 px</b> needed</span></div>
+        </div>
+
+        <div class="gate-do">
+          <div><i></i><span><b>On a phone</b>Open it on a laptop or a desktop. It is one page and takes six minutes.</span></div>
+          <div><i></i><span><b>On a laptop</b>Widen this window, or leave full-screen &mdash; the memo appears the moment there is room.</span></div>
+        </div>
+      </div>
+      <div class="gate-f">
+        <span class="note">No app, no sign-in</span>
+        <button class="gate-cp hide" id="gateCopy" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9h11v13H9z"/><path d="M15 5H4v13h3"/></svg>
+          <span id="gateCopyL">Copy link</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg";
+var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ─────────── THEME ─────────── */
+(function(){
+  var root=document.documentElement, btn=document.getElementById("themeBtn"), lbl=document.getElementById("themeLbl");
+  /* no data-theme means light; the OS preference is deliberately ignored */
+  function apply(t){
+    if(t){ root.setAttribute("data-theme",t); } else { root.removeAttribute("data-theme"); }
+    lbl.textContent = t==="dark" ? "Darkroom" : "Paper";
+  }
+  /* respect a data-theme already stamped on <html> (host viewer, saved copy)
+     rather than stripping it; a stored preference still wins */
+  var initial=root.getAttribute("data-theme");
+  var stored=null; try{ stored=localStorage.getItem("fp-theme"); }catch(e){}
+  apply(stored||initial);
+  btn.addEventListener("click",function(){
+    var cur = root.getAttribute("data-theme") || "light";
+    var next = cur==="dark" ? "light" : "dark";
+    apply(next);
+    try{ localStorage.setItem("fp-theme",next); }catch(e){}
+  });
+})();
+
+/* ─────────── HERO: the head, built layer by layer ───────────
+   Each print layer is a cross-section of a head, projected in 3/4 view.
+   Drawn top→bottom so lower discs correctly overlap the ones above,
+   but revealed bottom→top, the way the machine actually makes it.      */
+(function(){
+  var svg=document.getElementById("headSvg"), g=document.getElementById("headLayers");
+  if(!svg||!g) return;
+
+  /* [u, halfWidth, depth].  u = 0 at the crown, 1 at the cut base of the bust.
+     Shoulders stay wide-but-shallow, otherwise they render as stacked saucers. */
+  var P=[
+    [0.000,0.15,0.19],[0.040,0.48,0.58],[0.090,0.70,0.83],[0.150,0.85,0.97],
+    [0.220,0.93,1.05],[0.300,0.98,1.09],[0.380,1.00,1.10],[0.460,0.96,1.07],
+    [0.540,0.89,1.01],[0.610,0.79,0.93],[0.680,0.64,0.79],[0.730,0.49,0.64],
+    [0.775,0.38,0.51],[0.815,0.35,0.46],[0.855,0.41,0.49],[0.895,0.55,0.53],
+    [0.935,0.75,0.56],[0.970,0.90,0.58],[1.000,1.00,0.59]
+  ];
+  function cr(p0,p1,p2,p3,t){
+    var t2=t*t,t3=t2*t;
+    return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
+  }
+  function prof(u,i){
+    var k=0;
+    while(k<P.length-2 && P[k+1][0]<u) k++;
+    var a=P[Math.max(0,k-1)], b=P[k], c=P[Math.min(P.length-1,k+1)], d=P[Math.min(P.length-1,k+2)];
+    var t=Math.max(0,Math.min(1,(u-b[0])/((c[0]-b[0])||1)));
+    return Math.max(0.02, cr(a[i],b[i],c[i],d[i],t));
+  }
+  function gauss(u,c,s){ var d=(u-c)/s; return Math.exp(-d*d); }
+  /* brow at .33, nose tip at .51, lips at .60, chin at .70 */
+  function narrow(u){ return 0.38*gauss(u,0.51,0.055) + 0.09*gauss(u,0.60,0.032) + 0.13*gauss(u,0.70,0.045); }
+  function wide(u){ return 0.07*gauss(u,0.33,0.060); }
+  function occiput(u){ return 0.11*gauss(u,0.32,0.170); }
+
+  var N=48, cx=214, top=52, H=344, Sx=114, M=92;
+  var psi=-1.00, cp=Math.cos(psi), sp=Math.sin(psi), pitch=0.30;
+
+  for(var i=0;i<N;i++){
+    var u = 0.012 + (i/(N-1))*0.988;
+    var a = prof(u,1)*Sx, b = prof(u,2)*Sx, yb = top + u*H;
+    var fn = narrow(u)*Sx, fw = wide(u)*Sx, bb = occiput(u)*Sx;
+    var d="";
+    for(var k=0;k<=M;k++){
+      var th=(k/M)*Math.PI*2, s=Math.sin(th), c2=Math.cos(th);
+      var f=Math.max(0,s), bk=Math.max(0,-s);
+      var x0=a*c2;
+      var z0=b*s + fn*Math.pow(f,4.5) + fw*f*f - bb*bk*bk;
+      var xr =  x0*cp + z0*sp;
+      var zr = -x0*sp + z0*cp;
+      d += (k?"L":"M") + (cx+xr).toFixed(1) + " " + (yb + zr*pitch).toFixed(1);
+    }
+    var p=document.createElementNS(NS,"path");
+    p.setAttribute("d", d+"Z");
+    p.setAttribute("class","hl");
+    p.style.setProperty("--o", (0.95 - 0.42*Math.pow(u,1.30)).toFixed(3));
+    p.style.setProperty("--d", (0.06 + (1-u)*0.72).toFixed(3)+"s");
+    g.appendChild(p);
+  }
+
+  function light(){
+    var ls=g.querySelectorAll(".hl");
+    for(var j=0;j<ls.length;j++) ls[j].classList.add("on");
+    svg.classList.add("rv-in");
+  }
+  if(reduce){ light(); }
+  else { requestAnimationFrame(function(){ setTimeout(light,150); }); }
+})();
+
+/* ─────────── CUMULATIVE CASH staircase ─────────── */
+(function(){
+  var line=document.getElementById("cashLine"), fill=document.getElementById("cashFill");
+  if(!line) return;
+  var x0=60, x1=660, yZero=86, yTop=32, yBot=220;
+  var START=-65000, PER=2235, N=40, VMAX=24400;
+  function ys(v){ return v>=0 ? yZero - (v/VMAX)*(yZero-yTop) : yZero + (Math.abs(v)/65000)*(yBot-yZero); }
+  var step=(x1-x0)/N, v=START, d="M"+x0+" "+ys(v).toFixed(1);
+  for(var i=1;i<=N;i++){
+    var nx=x0+i*step;
+    d += "L"+nx.toFixed(1)+" "+ys(v).toFixed(1);
+    v += PER;
+    d += "L"+nx.toFixed(1)+" "+ys(v).toFixed(1);
+  }
+  line.setAttribute("d",d);
+  fill.setAttribute("d", d+"L"+x1+" "+yZero+"L"+x0+" "+yZero+"Z");
+})();
+
+/* ─────────── DETAIL MODE ─────────── */
+(function(){
+  var skim=document.getElementById("mSkim"), full=document.getElementById("mFull"),
+      thumb=document.getElementById("mThumb"),
+      dets=[].slice.call(document.querySelectorAll("details"));
+  function move(el){ thumb.style.width=el.offsetWidth+"px"; thumb.style.transform="translateX("+el.offsetLeft+"px)"; }
+  function setMode(open){
+    dets.forEach(function(d){ d.open=open; });
+    skim.classList.toggle("on",!open);
+    full.classList.toggle("on",open);
+    move(open?full:skim);
+  }
+  skim.addEventListener("click",function(){ setMode(false); });
+  full.addEventListener("click",function(){ setMode(true); });
+  window.addEventListener("resize",function(){ move(full.classList.contains("on")?full:skim); });
+  window.addEventListener("beforeprint",function(){ dets.forEach(function(d){ d.open=true; }); });
+  move(skim);
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ move(skim); }); }
+})();
+
+/* ─────────── THROUGHPUT ─────────── */
+(function(){
+  var q=document.getElementById("qty"), out=document.getElementById("qtyOut"),
+      fB=document.getElementById("fdmBar"), rB=document.getElementById("resBar"),
+      fV=document.getElementById("fdmVal"), rV=document.getElementById("resVal"),
+      seps=document.getElementById("plateSeps"), axis=document.getElementById("tpAxis"),
+      note=document.getElementById("tpNote"),
+      FDM=360, PLATE=110, PER_PLATE=2, MAX=12*FDM;   /* 4,320 min = 72 h */
+
+  [0,12,24,36,48,60,72].forEach(function(h){
+    var pct=(h*60/MAX)*100;
+    var t=document.createElement("i"); t.style.left=pct+"%"; axis.appendChild(t);
+    var s=document.createElement("span"); s.style.left=pct+"%"; s.textContent=(h===72?"72 h":h); axis.appendChild(s);
+  });
+
+  function hm(m){ var h=Math.floor(m/60), r=Math.round(m%60); return h+" h "+(r<10?"0":"")+r+" m"; }
+  function draw(){
+    var n=+q.value, f=n*FDM, plates=Math.ceil(n/PER_PLATE), r=plates*PLATE;
+    out.innerHTML = n+" <small>"+(n===1?"face":"faces")+"</small>";
+    fB.style.width = Math.min(100,f/MAX*100)+"%";
+    rB.style.width = Math.min(100,r/MAX*100)+"%";
+    fV.textContent = hm(f); rV.textContent = hm(r);
+
+    seps.innerHTML="";
+    for(var k=1;k<plates;k++){
+      var i=document.createElement("i");
+      i.style.left=(k/plates*100)+"%";
+      seps.appendChild(i);
+    }
+    var ratio=(f/r).toFixed(1), done=Math.floor(r/FDM);
+    note.innerHTML = plates===1
+      ? "<b>One plateful.</b> Resin is finished before breakfast. Filament has managed part of a single face."
+      : "<b>"+plates+" platefuls, back to back.</b> In the time resin delivers all "+n+", filament has finished "
+        + (done===0?"<b>not one</b>":"<b>"+done+"</b>") + ". Resin is <b>"+ratio+"&times; faster</b> at this order size.";
+  }
+  q.addEventListener("input",draw);
+  draw();
+})();
+
+/* ─────────── LEGEND ↔ BAR LINKING ─────────── */
+(function(){
+  var bar=document.getElementById("bar65"), leg=document.getElementById("leg65");
+  if(!bar||!leg) return;
+  var segs=[].slice.call(bar.children);
+  leg.addEventListener("mouseover",function(e){
+    var row=e.target.closest && e.target.closest(".lg");
+    if(!row) return;
+    var id=row.getAttribute("data-seg");
+    bar.classList.add("dim");
+    segs.forEach(function(s){ s.classList.toggle("hi", s.getAttribute("data-seg")===id); });
+  });
+  leg.addEventListener("mouseleave",function(){
+    bar.classList.remove("dim");
+    segs.forEach(function(s){ s.classList.remove("hi"); });
+  });
+})();
+
+/* ─────────── REVEAL ─────────── */
+(function(){
+  /* measure every dashed path so the draw-in length is exact */
+  [].slice.call(document.querySelectorAll(".drw")).forEach(function(p){
+    try{ p.style.setProperty("--len", Math.ceil(p.getTotalLength())+""); }catch(e){}
+  });
+  var targets=[].slice.call(document.querySelectorAll(".rv"));
+  if(reduce || !("IntersectionObserver" in window)){
+    targets.forEach(function(t){ t.classList.add("rv-in"); });
+    return;
+  }
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add("rv-in"); io.unobserve(e.target); }
+    });
+  },{rootMargin:"0px 0px -12% 0px",threshold:.12});
+  targets.forEach(function(t){ io.observe(t); });
+  window.addEventListener("beforeprint",function(){ targets.forEach(function(t){ t.classList.add("rv-in"); }); });
+})();
+
+/* ─────────── NAV ─────────── */
+(function(){
+  var secs=[].slice.call(document.querySelectorAll("section[id]")),
+      items=[].slice.call(document.querySelectorAll(".rail-item")),
+      chips=[].slice.call(document.querySelectorAll(".mchip")),
+      fill=document.getElementById("railFill"), mprog=document.getElementById("mprog"),
+      mnav=document.getElementById("mnav"), head=document.getElementById("hd"), tick=false;
+  function upd(){
+    tick=false;
+    var y=window.scrollY, h=document.body.scrollHeight-window.innerHeight,
+        pct=h>0?Math.min(1,Math.max(0,y/h)):0;
+    fill.style.height=(pct*100)+"%";
+    mprog.style.width=(pct*100)+"%";
+    var revealAt=head?head.offsetTop+head.offsetHeight-40:400;
+    mnav.classList.toggle("show", y>revealAt);
+    var i=-1, probe=y+Math.min(250,window.innerHeight*0.33);
+    for(var k=0;k<secs.length;k++){ if(secs[k].offsetTop<=probe) i=k; }
+    items.forEach(function(el,j){ el.classList.toggle("on",j===i); });
+    chips.forEach(function(el,j){ el.classList.toggle("on",j===i); });
+  }
+  window.addEventListener("scroll",function(){ if(!tick){ tick=true; requestAnimationFrame(upd); } },{passive:true});
+  window.addEventListener("resize",upd);
+  upd();
+})();
+
+/* ─────────── GATE ───────────
+   The CSS decides whether the gate is shown; this only keeps the width
+   readout honest and offers the link so the page can be reopened elsewhere. */
+(function(){
+  var g=document.getElementById("gate"); if(!g) return;
+  var out=document.getElementById("gateW"), fill=document.getElementById("gateFill"),
+      cp=document.getElementById("gateCopy"), cpl=document.getElementById("gateCopyL"),
+      NEED=768, queued=false;
+  function upd(){
+    queued=false;
+    var px=Math.round(window.innerWidth);
+    out.textContent=px+" px";
+    fill.style.width=Math.min(100,px/NEED*100).toFixed(1)+"%";
+  }
+  function queue(){ if(!queued){ queued=true; requestAnimationFrame(upd); } }
+  window.addEventListener("resize",queue);
+  window.addEventListener("orientationchange",queue);
+  upd();
+
+  /* copying a file:// path helps nobody */
+  if(navigator.clipboard && location.protocol!=="file:"){
+    cp.classList.remove("hide");
+    cp.addEventListener("click",function(){
+      navigator.clipboard.writeText(location.href).then(function(){
+        cp.classList.add("done"); cpl.textContent="Link copied";
+        setTimeout(function(){ cp.classList.remove("done"); cpl.textContent="Copy link"; },2200);
+      },function(){});
+    });
+  }
+})();
+
+/* ─────────── GLOSSARY ───────────
+   Every marked word carries its own plain definition, so the card is
+   useful before the network answers.  The Wikipedia line and picture
+   are enrichment: fetched on hover-intent, cached, never waited on.   */
+(function(){
+  var G={
+  cured:{term:"Curing",tag:"chemistry",wiki:"Photopolymer",
+    ours:"Liquid resin turning permanently solid. UV light snaps its molecules into a rigid lattice in about <b>2.5 seconds per layer</b>. It cannot be melted back, which is why a failed print is scrap."},
+
+  slicing:{term:"Slicing",tag:"software",wiki:"Slicer (3D printing)",
+    ours:"Cutting the model into printable layers before it reaches the machine. A 130 mm head at 0.05 mm becomes <b>2,600 slices</b>, each with its own exposure time.",
+    fig:'<svg class="ch" viewBox="0 0 96 96" aria-hidden="true">'
+      +'<path class="c-fig-2" d="M20 74 V56 C20 47 27 43 32 40 C28 35 27 28 27 23 C27 13 33 8 37 8 C41 8 47 13 47 23 C47 28 46 35 42 40 C47 43 54 47 54 56 V74 Z"/>'
+      +'<g class="c-uvs" stroke-width=".9" opacity=".9"><path d="M28 18 h18"/><path d="M27 26 h20"/><path d="M28 34 h19"/><path d="M30 42 h14"/><path d="M21 52 h32"/><path d="M20 62 h34"/></g>'
+      +'<path class="c-uvs" stroke-width=".8" stroke-dasharray="2 2" d="M48 26 H66"/>'
+      +'<ellipse class="c-uv" cx="76" cy="26" rx="11" ry="3.4"/>'
+      +'<ellipse class="c-uv" cx="76" cy="35" rx="11" ry="3.4" opacity=".45"/>'
+      +'<ellipse class="c-uv" cx="76" cy="44" rx="11" ry="3.4" opacity=".22"/></svg>'},
+
+  tilt:{term:"Tilt-release",tag:"mechanism",
+    ours:"The vat tips a few degrees to peel each finished layer off the film instead of pulling it straight up. It is what took layer times from about eight seconds down to <b>2.5</b>.",
+    fig:'<svg class="ch" viewBox="0 0 96 96" aria-hidden="true">'
+      +'<path class="c-ams" d="M16 42 H80" stroke-width="1.5"/>'
+      +'<rect class="c-am" x="34" y="33" width="28" height="6" opacity=".85"/>'
+      +'<path class="c-ams" d="M48 28 V16" stroke-width="1.1"/>'
+      +'<path class="c-am" d="M44 19 L48 11 L52 19 Z"/>'
+      +'<path class="c-grid" d="M12 54 H84"/>'
+      +'<path class="c-uvs" d="M16 84 L80 71" stroke-width="1.5"/>'
+      +'<g transform="rotate(-11.5 48 76)"><rect class="c-uv" x="34" y="66" width="28" height="6"/></g>'
+      +'<path class="c-uvs" d="M76 64 A 17 17 0 0 0 63 52" stroke-width="1.1"/>'
+      +'<path class="c-uv" d="M65 56 L60 49 L68 50 Z"/></svg>'},
+
+  primer:{term:"Primer",tag:"finishing",wiki:"Primer (paint)",
+    ours:"A thin grey undercoat sprayed on before paint. It grips the resin, hides sanding marks and fills roughly <b>0.1 mm</b> of surface &mdash; part of why the scan&rsquo;s error matters less than it sounds."},
+
+  blender:{term:"Blender",tag:"software",wiki:"Blender (software)",
+    ours:"Free, open-source 3D sculpting software. The <b>25 minutes a face</b> spent rebuilding hair and spectacle frames happens here. It is the one skill in this plan that has to be learned rather than bought."},
+
+  truedepth:{term:"TrueDepth &middot; structured light",tag:"scanning",wiki:"Structured-light 3D scanner",
+    ours:"The iPhone&rsquo;s dot projector. It throws thousands of infrared dots at a face and reads how the pattern distorts to recover depth. Matte skin reads well; <b>dark hair, glass and thin metal</b> swallow or scatter the dots and come back as holes.",
+    fig:'<svg class="ch" viewBox="0 0 96 96" aria-hidden="true">'
+      +'<rect class="c-pane" x="8" y="30" width="14" height="38" stroke="var(--line-2)" stroke-width="1.2"/>'
+      +'<circle class="c-uv" cx="15" cy="49" r="2"/>'
+      +'<g class="c-uvs" stroke-width=".7" opacity=".65"><path d="M22 49 L51 20"/><path d="M22 49 L46 32"/><path d="M22 49 L40 48"/><path d="M22 49 L47 57"/><path d="M22 49 L56 77"/></g>'
+      +'<path class="c-fig" d="M56 13 C46 19 44 30 46 38 C44 42 38 46 38 48 C44 51 46 54 46 58 C50 60 52 63 50 67 C53 74 58 79 64 84 C77 81 85 66 85 48 C85 26 72 11 56 13 Z"/>'
+      +'<g class="c-uv"><circle cx="50" cy="21" r="1.5"/><circle cx="46" cy="31" r="1.5"/><circle cx="43" cy="41" r="1.5"/><circle cx="39" cy="48" r="1.5"/><circle cx="46" cy="57" r="1.5"/><circle cx="50" cy="66" r="1.5"/><circle cx="57" cy="77" r="1.5"/>'
+      +'<circle cx="62" cy="24" r="1.4" opacity=".45"/><circle cx="71" cy="35" r="1.4" opacity=".45"/><circle cx="72" cy="60" r="1.4" opacity=".45"/></g></svg>'},
+
+  stereo:{term:"Stereophotogrammetry",tag:"measurement",wiki:"Photogrammetry",
+    ours:"Shape measured from many photographs taken at the same instant. The clinical rig the phone is judged against: a ring of calibrated cameras firing together, accurate to a fraction of a millimetre.",
+    /* drawn rather than borrowed: the Wikipedia lead image for
+       photogrammetry is an aerial coastline, which explains nothing here */
+    fig:'<svg class="ch" viewBox="0 0 96 96" aria-hidden="true">'
+      +'<ellipse class="c-fig" cx="48" cy="50" rx="10" ry="12"/>'
+      +'<path class="c-fig" d="M38 62 C40 58 44 57 48 57 C52 57 56 58 58 62 Z"/>'
+      +'<g class="c-uv"><rect x="77" y="47" width="8" height="6"/><rect x="61" y="76" width="8" height="6"/>'
+      +'<rect x="28" y="76" width="8" height="6"/><rect x="11" y="47" width="8" height="6"/>'
+      +'<rect x="28" y="18" width="8" height="6"/><rect x="61" y="18" width="8" height="6"/></g>'
+      +'<g class="c-uvs" stroke-width=".8" stroke-dasharray="2.5 2.5" opacity=".85">'
+      +'<path d="M74 50 H60"/><path d="M61 73 L54 63"/><path d="M36 73 L43 63"/>'
+      +'<path d="M22 50 H36"/><path d="M36 27 L43 38"/><path d="M61 27 L54 38"/></g></svg>'},
+
+  jig:{term:"Jig",tag:"tooling",wiki:"Jig (tool)",
+    ours:"A cheap printed cradle that holds a piece in exactly one position &mdash; for painting an edge cleanly, or for dropping it into the same spot in a box every single time."},
+
+  binder:{term:"Binder jetting",tag:"process",wiki:"Powder bed and inkjet head 3D printing",
+    ours:"Inkjet heads spraying coloured glue into a bed of powder, one layer at a time. It is how the <b>&#8377;25 lakh</b> machines make full-colour figures, and the reason we cannot sell the same object they do."},
+
+  ipa:{term:"Isopropyl alcohol &middot; IPA",tag:"solvent",wiki:"Isopropyl alcohol",
+    ours:"The solvent that washes uncured resin off a fresh print. Flammable, and it evaporates into whatever room it is used in &mdash; which is exactly what water-washable resin buys you out of.",
+    fig:'<svg class="ch" viewBox="0 0 96 96" aria-hidden="true">'
+      +'<g class="c-uvs" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M24 62 L46 50 L68 62 M46 50 V32"/></g>'
+      +'<circle class="c-uv" cx="24" cy="62" r="2.2"/><circle class="c-uv" cx="68" cy="62" r="2.2"/>'
+      +'<text class="t-l c-uvt" x="46" y="27" text-anchor="middle">OH</text></svg>'},
+
+  mesh:{term:"Polygon mesh",tag:"geometry",wiki:"Polygon mesh",
+    ours:"The skin of triangles a scan produces &mdash; vertices, edges and faces, with nothing at all inside. The holes in it are what have to be closed by hand before the model can be sliced."},
+
+  supports:{term:"Supports",tag:"printing",
+    ours:"Thin sacrificial struts printed under every overhang &mdash; a nose, a chin, an ear &mdash; so nothing has to cure in mid-air. They snap off afterwards and leave marks to sand. Roughly <b>20% of the resin</b> in every print.",
+    fig:'<svg class="ch" viewBox="0 0 96 96" aria-hidden="true">'
+      +'<path class="c-fig" d="M30 74 V56 C30 47 37 43 42 40 C38 35 37 28 37 23 C37 13 43 8 47 8 C51 8 57 13 57 23 C57 28 56 35 52 40 C57 43 64 47 64 56 V74 Z"/>'
+      +'<g class="c-uvs" stroke-width="1"><path d="M33 74 V85"/><path d="M40 74 V85"/><path d="M47 74 V85"/><path d="M54 74 V85"/><path d="M61 74 V85"/>'
+      +'<path d="M39 41 L31 57"/><path d="M55 41 L63 57"/></g>'
+      +'<rect x="14" y="85" width="68" height="3" fill="var(--line-2)"/></svg>'},
+
+  gypsum:{term:"Gypsum",tag:"material",wiki:"Gypsum",
+    ours:"Plaster powder. What the full-colour 3D-selfie firms actually print: colour running right through the piece, chalky to the touch, and brittle. Painted resin is a different object, not a cheaper version of this one."},
+
+  sensitiser:{term:"Sensitiser",tag:"health",wiki:"Allergic contact dermatitis",
+    ours:"A substance your immune system learns to attack. The tenth exposure is worse than the first, and the reaction can arrive after years of handling it safely &mdash; so gloves matter from day one, not after the first rash."}
+  };
+
+  var card=document.getElementById("glCard");
+  var trigs=[].slice.call(document.querySelectorAll(".gl"));
+  if(!card || !trigs.length) return;
+
+  var notch=document.getElementById("glNotch"),
+      figEl=document.getElementById("glFig"),
+      tagEl=document.getElementById("glcTag"),
+      termEl=document.getElementById("glcTerm"),
+      oursEl=document.getElementById("glcOurs"),
+      wrapEl=document.getElementById("glcWrap"),
+      wikiEl=document.getElementById("glcWiki"),
+      skEl=document.getElementById("glcSk"),
+      linkEl=document.getElementById("glcLink"),
+      srcEl=document.getElementById("glcSrc"),
+      closeEl=document.getElementById("glClose"),
+      scrim=document.getElementById("glScrim"),
+      hint=document.getElementById("glHint");
+
+  var mqSheet=window.matchMedia("(max-width:860px)"),
+      mqTouch=window.matchMedia("(hover:none) and (pointer:coarse)");
+  function sheet(){ return mqSheet.matches; }
+  /* only decides the wording. Whether hover *works* is decided by the
+     pointer events themselves: a pointerType of "mouse" is the real proof. */
+  function canHover(){ return !mqTouch.matches; }
+
+  /* ── wire the words, number them for print ── */
+  var numbered={}, order=[], count=0;
+  trigs.forEach(function(t){
+    var k=t.getAttribute("data-t");
+    if(!G[k]){ t.className="";  return; }
+    t.setAttribute("tabindex","0");
+    t.setAttribute("role","button");
+    t.setAttribute("aria-expanded","false");
+    if(!numbered[k] && !(t.closest&&t.closest("#glTip"))){
+      numbered[k]=1; order.push(k); count++;
+      t.setAttribute("data-n",count);
+    }
+  });
+
+  var total=Object.keys(G).length;
+  var tipN=document.getElementById("glTipN"), tipV=document.getElementById("glTipVerb");
+  if(tipN) tipN.textContent=total;
+  if(tipV) tipV.textContent=canHover()?"hover":"tap";
+  var hintK=hint&&hint.querySelector(".glh-k");
+  if(hintK) hintK.innerHTML='<i></i>'+total+' words';
+  var hintTxt=document.getElementById("glHintTxt");
+  if(hintTxt && !canHover())
+    hintTxt.innerHTML="<b>Tap this word.</b> Every word marked with a dotted rule and a small square opens a short definition and a picture.";
+
+  /* ── the printed glossary: hover does not survive paper ── */
+  var ol=document.querySelector("#glPrint ol");
+  if(ol) order.forEach(function(k,i){
+    var li=document.createElement("li");
+    li.innerHTML='<em>'+(i+1)+'</em><b>'+G[k].term+'.</b> '+G[k].ours;
+    ol.appendChild(li);
+  });
+
+  /* ── Wikipedia, lazily ── */
+  var cache={};
+  function trim(s,max){
+    s=(s||"").replace(/\s+/g," ").trim();
+    if(s.length<=max) return s;
+    var c=s.lastIndexOf(". ",max);
+    if(c>max*0.45) return s.slice(0,c+1);
+    c=s.lastIndexOf(" ",max);
+    return s.slice(0,c>0?c:max).replace(/[,;:.]+$/,"")+"…";
+  }
+  function slug(t){ return encodeURIComponent(t.replace(/ /g,"_")); }
+  function pageUrl(t){ return "https://en.wikipedia.org/wiki/"+slug(t); }
+  function load(k,cb){
+    var d=G[k];
+    if(!d.wiki){ cb(null); return; }
+    if(cache[k]){ cb(cache[k]); return; }
+    try{ var s=sessionStorage.getItem("fp-gl-"+k);
+         if(s){ cache[k]=JSON.parse(s); cb(cache[k]); return; } }catch(e){}
+    if(!window.fetch){ cb({err:1}); return; }
+    fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+slug(d.wiki)+"?redirect=true",
+          {mode:"cors",credentials:"omit"})
+      .then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); })
+      .then(function(j){
+        var o={ ex:trim(j.extract,215),
+                img:(j.thumbnail&&j.thumbnail.source)||"",
+                url:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||pageUrl(d.wiki) };
+        cache[k]=o;
+        try{ sessionStorage.setItem("fp-gl-"+k,JSON.stringify(o)); }catch(e){}
+        cb(o);
+      })
+      .catch(function(){ cache[k]={err:1}; cb(cache[k]); });
+  }
+
+  /* ── render ── */
+  var req=0;
+  function render(k){
+    var d=G[k], id=++req;
+    tagEl.textContent=d.tag||"glossary";
+    termEl.innerHTML=d.term;
+    oursEl.innerHTML=d.ours;
+    card.classList.remove("nofig");
+
+    if(d.fig){ figEl.innerHTML=d.fig; figEl.classList.remove("wait"); }
+    else { figEl.innerHTML=""; figEl.classList.add("wait"); }
+
+    if(d.wiki){
+      wrapEl.classList.remove("hide");
+      wikiEl.textContent=""; wikiEl.style.display="none";
+      skEl.style.display="";
+      linkEl.classList.remove("hide"); linkEl.href=pageUrl(d.wiki);
+      srcEl.style.display="none";
+    }else{
+      wrapEl.classList.add("hide");
+      linkEl.classList.add("hide");
+      srcEl.style.display="";
+      figEl.classList.remove("wait");
+      if(!d.fig) card.classList.add("nofig");
+    }
+
+    load(k,function(o){
+      if(id!==req) return;
+      skEl.style.display="none";
+      if(!o) return;
+      if(o.err){
+        figEl.classList.remove("wait");
+        if(!d.fig) card.classList.add("nofig");
+        wikiEl.style.display="";
+        wikiEl.innerHTML='<i style="font-style:normal;color:var(--grey)">Needs a connection. The definition above is this memo&rsquo;s own.</i>';
+        place(); return;
+      }
+      if(o.ex){ wikiEl.style.display=""; wikiEl.textContent=o.ex; }
+      if(o.url) linkEl.href=o.url;
+      if(!d.fig){
+        if(o.img){
+          var im=document.createElement("img");
+          im.alt=""; im.decoding="async";
+          im.onload=function(){ if(id===req){ figEl.classList.remove("wait"); im.className="in"; } };
+          im.onerror=function(){ if(id===req){ figEl.classList.remove("wait"); card.classList.add("nofig"); place(); } };
+          im.src=o.img;
+          figEl.innerHTML=""; figEl.appendChild(im);
+        }else{
+          figEl.classList.remove("wait");
+          card.classList.add("nofig");
+        }
+      }
+      place();
+    });
+  }
+
+  /* ── position: prefer below, flip above, clamp, point the notch ── */
+  var cur=null, pinned=false, viaKey=false, tIn=null, tOut=null, inCard=false, noReopen=false;
+  function place(){
+    if(!cur || sheet()) return;
+    var r=cur.getBoundingClientRect(),
+        cw=card.offsetWidth, ch=card.offsetHeight,
+        vw=window.innerWidth, vh=window.innerHeight, GAP=11, PAD=12;
+    var side = (r.bottom+GAP+ch <= vh-8) ? "below"
+             : ((r.top-GAP-ch >= 8) ? "above" : (r.top > vh-r.bottom ? "above" : "below"));
+    var top = side==="below" ? r.bottom+GAP : r.top-GAP-ch;
+    top=Math.max(8,Math.min(top,vh-ch-8));
+    var ax=r.left+Math.min(r.width/2,90);
+    var left=Math.round(ax-Math.min(cw*0.3,104));
+    left=Math.max(PAD,Math.min(left,vw-cw-PAD));
+    card.style.top=Math.round(top)+"px";
+    card.style.left=left+"px";
+    card.setAttribute("data-side",side);
+    notch.style.left=Math.round(Math.min(Math.max(ax-left-4.5,13),cw-22))+"px";
+    notch.style.opacity=(ax>=left+8 && ax<=left+cw-8)?"1":"0";
+  }
+
+  function clearT(){ if(tIn){clearTimeout(tIn);tIn=null;} if(tOut){clearTimeout(tOut);tOut=null;} }
+
+  function open(t,pin,key){
+    clearT();
+    if(cur===t){
+      if(pin) pinned=true;
+      if(key) viaKey=true;
+      if(sheet()&&pinned) scrim.classList.add("on");
+      return;
+    }
+    if(cur){ cur.classList.remove("gl-on"); cur.setAttribute("aria-expanded","false"); cur.removeAttribute("aria-describedby"); }
+    cur=t; pinned=!!pin; viaKey=!!key;
+    t.classList.add("gl-on");
+    t.setAttribute("aria-expanded","true");
+    t.setAttribute("aria-describedby","glCard");
+    render(t.getAttribute("data-t"));
+    card.classList.add("on");
+    place();
+    if(sheet()&&pinned) scrim.classList.add("on");
+    dropHint();
+  }
+
+  function close(refocus){
+    clearT();
+    if(!cur) return;
+    var t=cur;
+    cur=null; pinned=false; inCard=false;
+    t.classList.remove("gl-on");
+    t.setAttribute("aria-expanded","false");
+    t.removeAttribute("aria-describedby");
+    card.classList.remove("on");
+    scrim.classList.remove("on");
+    if(refocus && viaKey){
+      /* handing focus back must not trip the focus-opens-it rule */
+      noReopen=true;
+      try{ t.focus({preventScroll:true}); }catch(e){}
+      requestAnimationFrame(function(){ noReopen=false; });
+    }
+    viaKey=false;
+  }
+
+  function softClose(){
+    if(pinned) return;
+    tOut=setTimeout(function(){ if(!pinned && !inCard) close(false); },200);
+  }
+
+  trigs.forEach(function(t){
+    if(!G[t.getAttribute("data-t")]) return;
+
+    t.addEventListener("pointerenter",function(e){
+      if(e.pointerType && e.pointerType!=="mouse") return;
+      clearT();
+      load(t.getAttribute("data-t"),function(){});   /* warm the cache early */
+      if(cur===t) return;
+      tIn=setTimeout(function(){ open(t,false,false); },130);
+    });
+    t.addEventListener("pointerleave",function(e){
+      if(e.pointerType && e.pointerType!=="mouse") return;
+      if(tIn){ clearTimeout(tIn); tIn=null; }
+      /* scrolling makes the cursor cross words it never opened; only the
+         word the card actually belongs to is allowed to close it */
+      if(cur===t) softClose();
+    });
+    t.addEventListener("click",function(e){
+      e.preventDefault();
+      if(cur===t && pinned){ close(false); return; }
+      open(t,true,false);
+    });
+    t.addEventListener("keydown",function(e){
+      var k=e.key;
+      if(k!=="Enter" && k!==" " && k!=="Spacebar") return;
+      e.preventDefault();
+      if(cur===t && pinned){ close(true); return; }
+      open(t,true,true);
+      /* the card is only just becoming visible; a hidden element cannot
+         take focus, so hand it over on the next frame */
+      requestAnimationFrame(function(){
+        if(cur!==t) return;
+        var f=linkEl;
+        if(f.classList.contains("hide"))                       /* no wiki link */
+          f = (getComputedStyle(closeEl).display!=="none") ? closeEl : card;
+        try{ f.focus({preventScroll:true}); }catch(err){}
+      });
+    });
+    t.addEventListener("focus",function(){ if(!noReopen && cur!==t) open(t,false,true); });
+    t.addEventListener("blur",function(e){
+      if(pinned) return;
+      if(e.relatedTarget && card.contains(e.relatedTarget)) return;
+      close(false);
+    });
+  });
+
+  card.addEventListener("pointerenter",function(){ inCard=true; clearT(); });
+  card.addEventListener("pointerleave",function(e){
+    inCard=false;
+    if(e.pointerType && e.pointerType!=="mouse") return;
+    softClose();
+  });
+  card.addEventListener("focusout",function(e){
+    if(!pinned) return;
+    var to=e.relatedTarget;
+    if(to && (card.contains(to) || to===cur)) return;
+    close(false);
+  });
+  closeEl.addEventListener("click",function(){ close(true); });
+  scrim.addEventListener("click",function(){ close(false); });
+
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape" && cur){ e.preventDefault(); close(true); }
+  });
+  document.addEventListener("pointerdown",function(e){
+    if(!cur || !pinned) return;
+    if(card.contains(e.target)) return;
+    if(e.target.closest && e.target.closest(".gl")) return;
+    close(false);
+  },true);
+
+  var sq=false;
+  window.addEventListener("scroll",function(){
+    if(!cur || sheet() || sq) return;
+    sq=true;
+    requestAnimationFrame(function(){
+      sq=false;
+      if(!cur) return;
+      var r=cur.getBoundingClientRect();
+      if(r.bottom<0 || r.top>window.innerHeight){ close(false); return; }
+      place();
+    });
+  },{passive:true});
+  window.addEventListener("resize",function(){ if(cur) place(); });
+  window.addEventListener("beforeprint",function(){ close(false); });
+
+  /* ── the one-time coachmark, pointing at the word in the hero ── */
+  var HK="fp-gloss-hint", hintTrig=document.querySelector("#glTip .gl"),
+      hintOn=false, hintT=null, hintDone=false;
+  function markSeen(){ if(hintDone) return; hintDone=true; try{ localStorage.setItem(HK,"1"); }catch(e){} }
+  function placeHint(){
+    if(!hintTrig) return;
+    var w=hint.offsetWidth, h=hint.offsetHeight, GAP=10;
+    var r=hintTrig.getBoundingClientRect();
+    /* clear of the whole tip paragraph, so it never covers the sentence it
+       is reinforcing; the notch still points back at the marked word */
+    var tip=document.getElementById("glTip");
+    var box=tip?tip.getBoundingClientRect():r;
+    /* below by preference: above would cover the detail-level toggle */
+    var above=(box.bottom+GAP+h > window.innerHeight-8) && (box.top-GAP-h >= 8);
+    var ax=r.left+Math.min(r.width/2,80);
+    var left=Math.max(12,Math.min(Math.round(ax-32),window.innerWidth-w-12));
+    hint.style.top=Math.round(above ? box.top-GAP-h : box.bottom+GAP)+"px";
+    hint.style.left=left+"px";
+    hint.setAttribute("data-side",above?"above":"below");
+    var nb=hint.querySelector(".glh-notch");
+    if(nb) nb.style.left=Math.round(Math.min(Math.max(ax-left-4.5,14),w-22))+"px";
+  }
+  function dropHint(){
+    if(hintT){ clearTimeout(hintT); hintT=null; }
+    markSeen();
+    if(!hintOn) return;
+    hintOn=false;
+    hint.classList.remove("on");
+    if(hintTrig) hintTrig.classList.remove("gl-pulse");
+  }
+  var seenHint=false;
+  try{ seenHint=localStorage.getItem(HK)==="1"; }catch(e){}
+  if(!seenHint && hintTrig && hint){
+    setTimeout(function(){
+      if(hintDone || window.innerWidth<768 || window.scrollY>140) return;
+      hintOn=true;
+      placeHint();
+      hint.classList.add("on");
+      hintTrig.classList.add("gl-pulse");
+      hintT=setTimeout(dropHint,10000);
+    },1900);
+    document.getElementById("glHintX").addEventListener("click",dropHint);
+    window.addEventListener("scroll",function(){ if(hintOn && window.scrollY>260) dropHint(); },{passive:true});
+    window.addEventListener("resize",function(){ if(hintOn) placeHint(); });
+  }
+})();
+})();
+</script>
+</body>
+</html>
