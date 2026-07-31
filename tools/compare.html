@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>glb texture repack · A/B</title>
+<style>
+  html,body{margin:0;background:#EDECE8}
+  canvas{display:block}
+</style>
+<canvas id="c"></canvas>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+/*
+ * Renders ONE printer, at the size and bearing the bay in index.html actually
+ * uses, with a camera that does not depend on what was loaded. Two runs differ
+ * only by ?f=, so the images can be differenced pixel for pixel.
+ *
+ *   ?f=0  original 2048 png      ?f=1  repack 1024      ?f=2  repack 512
+ */
+const FILES = [
+  "../3dprinter/source/3DPrinter.glb",       // ?f=0  the 2048 png original
+  "../3dprinter/source/3DPrinter.min.glb"    // ?f=1  what the page ships
+];
+const which = +(new URLSearchParams(location.search).get("f") || 0);
+
+/* the bay at its widest: 440 css px of panel, at devicePixelRatio 2 */
+const W = 880, H = 1520;
+
+const canvas = document.getElementById("c");
+canvas.style.width = W / 2 + "px";
+canvas.style.height = H / 2 + "px";
+
+const renderer = new THREE.WebGLRenderer({
+  canvas, antialias: true, alpha: true, preserveDrawingBuffer: true
+});
+renderer.setClearAlpha(0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const key = new THREE.DirectionalLight(0xffffff, 2.1);
+key.position.set(-0.85, 1.15, 0.75);
+scene.add(new THREE.AmbientLight(0xffffff, 0.55), key);
+
+/* index.html's own eye and aim, fixed — nothing here is fitted to the model,
+   so every run frames identically whatever it loaded */
+const AIM = new THREE.Vector3(0, 0.265, 0);
+const EYE = new THREE.Vector3(-0.93, 0.53, 0.66);
+const camera = new THREE.PerspectiveCamera(32, W / H, 0.01, 20);
+const DIST = EYE.distanceTo(AIM);
+const want = Math.max(0.56, 0.38 / (W / H)) * 1.22;      // the bay's fit rule
+camera.fov = 2 * Math.atan((want / 2) / DIST) * 180 / Math.PI;
+camera.position.copy(EYE);
+camera.lookAt(AIM);
+camera.updateProjectionMatrix();
+
+const g = await new GLTFLoader().loadAsync(FILES[which]);
+g.scene.rotation.y = -0.22;
+scene.add(g.scene);
+
+renderer.render(scene, camera);
+document.title = "ready";
+</script>

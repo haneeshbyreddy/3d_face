@@ -8,6 +8,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%235B3FD1'/%3E%3Cg stroke='white' stroke-width='1.6' fill='none'%3E%3Cellipse cx='16' cy='11' rx='7' ry='2.2'/%3E%3Cellipse cx='16' cy='16' rx='7.6' ry='2.4'/%3E%3Cellipse cx='16' cy='21' rx='5.6' ry='2'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- three.js, for the machine in the right margin. Only wide screens ever ask
+     for it, but the handshake costs nothing to anyone who does not. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════════
@@ -156,7 +159,9 @@ svg{display:block}
   padding:.44rem .64rem;cursor:pointer;color:var(--muted);
   font-family:var(--mono);font-size:0.72rem;letter-spacing:.15em;text-transform:uppercase;
   transition:color .18s,border-color .18s}
-@supports (backdrop-filter:blur(1px)){
+/* Safari only dropped the -webkit- prefix in 18. Testing the unprefixed
+   property alone left every Safari before that with an opaque chip. */
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   .tt{background:color-mix(in srgb,var(--panel) 78%,transparent);
       -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 }
@@ -311,7 +316,12 @@ summary:focus-visible{outline:2px solid var(--uv);outline-offset:-2px}
   color:var(--muted);margin:0 0 1.2rem;padding-bottom:.75rem;border-bottom:1px solid var(--line);
   display:flex;gap:.6rem;align-items:baseline}
 .viz-t::before{content:"";width:5px;height:5px;background:var(--uv);flex:0 0 5px;translate:0 -1px}
+/* scrollbar-width only landed in Safari 18.2, so the thin bar is spelled
+   twice — the standard property, and the one WebKit has always understood */
 .scroller{overflow-x:auto;scrollbar-width:thin}
+.scroller::-webkit-scrollbar{height:8px}
+.scroller::-webkit-scrollbar-thumb{background:var(--line-2)}
+.scroller::-webkit-scrollbar-track{background:var(--panel-2)}
 @media(max-width:760px){
   .scroller svg{min-width:620px}
   .scroller{margin-right:calc(-1 * 1.3rem);padding-right:1.3rem}
@@ -350,7 +360,12 @@ summary:focus-visible{outline:2px solid var(--uv);outline-offset:-2px}
 .tp-count small{font-size:0.805rem;font-weight:600;color:var(--muted);font-variation-settings:"wdth" 100;letter-spacing:0}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;background:transparent;
   margin:1rem 0 .3rem;height:24px;cursor:pointer}
-input[type=range]:focus{outline:none}
+/* Only give up the default focus ring where :focus-visible can put one back.
+   Safari learned that selector in 15.4; before it, the bare rule left the
+   slider with no ring at all and nowhere for a keyboard to show itself. */
+@supports selector(:focus-visible){
+  input[type=range]:focus{outline:none}
+}
 input[type=range]:focus-visible{outline:2px solid var(--uv);outline-offset:4px}
 input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line-2)}
 input[type=range]::-moz-range-track{height:2px;background:var(--line-2)}
@@ -534,7 +549,7 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
 
 .mnav{position:fixed;z-index:45;top:0;left:0;right:0;background:var(--paper);
   border-bottom:1px solid var(--line);translate:0 -110%;transition:translate .28s cubic-bezier(.3,.9,.3,1)}
-@supports (backdrop-filter:blur(1px)){
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   .mnav{background:color-mix(in srgb,var(--paper) 88%,transparent);
     -webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4)}
 }
@@ -790,6 +805,107 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
 .gl-print li em{font-style:normal;font-family:var(--mono);color:var(--uv-ink);margin-right:.35em}
 
 /* ══════════════════════════════════════════════════════════════════
+   THE MACHINE BAY  ·  a Photon Mono 2 parked in the right margin for the
+   whole document, working through one 130 mm face as the memo is read.
+   The bay is transparent: body gets a padding-right, so the paper grid
+   keeps painting underneath and only the hairline says where it starts.
+   ══════════════════════════════════════════════════════════════════ */
+:root{ --bay:0px }
+
+.bay{
+  display:none; position:fixed; z-index:42; top:0; right:0; bottom:0;
+  width:var(--bay); flex-direction:column;
+  border-left:1px solid var(--line);
+  font-family:var(--mono);
+  pointer-events:none;              /* the memo keeps every click */
+}
+.bay-head{
+  display:flex; justify-content:space-between; align-items:center; gap:.6rem;
+  padding:.62rem .95rem; border-bottom:1px solid var(--line);
+  font-size:0.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted);
+}
+.bay-head b{ font-weight:400; color:var(--ink) }
+.bay-st{ display:flex; align-items:center; gap:.45rem; color:var(--uv-ink) }
+.bay-st i{
+  width:6px; height:6px; flex:0 0 6px; background:var(--grey-2);
+  transition:background .3s;
+}
+.bay-st.live i{ background:var(--uv); animation:baypulse 1.6s ease-in-out infinite }
+.bay-st.done i{ background:var(--green) }
+@keyframes baypulse{ 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* the stage. flex:1 so the machine takes whatever height is going. */
+.bay-stage{ position:relative; flex:1 1 auto; min-height:0 }
+.bay-stage canvas{ display:block; width:100%; height:100% }
+.bay-note{
+  position:absolute; left:.95rem; right:.95rem; bottom:.7rem; margin:0;
+  font-size:0.68rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--grey); line-height:1.6;
+}
+
+/* three beats, cross-faded. Stacked, so the panel never changes height. */
+.bay-cards{
+  position:relative; border-top:1px solid var(--line);
+  margin:0 .95rem; padding:.9rem 0 .2rem; height:8.2rem; flex:0 0 auto;
+}
+.bay-card{
+  position:absolute; inset:.9rem 0 auto 0; margin:0;
+  font-family:var(--text); font-size:0.845rem; line-height:1.55; color:var(--muted);
+  opacity:0; transform:translateY(6px); transition:opacity .5s ease,transform .5s cubic-bezier(.22,.7,.25,1);
+}
+.bay-card.on{ opacity:1; transform:none }
+.bay-card b{ display:block; font-family:var(--mono); font-size:0.7rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--uv-ink); font-weight:400; margin-bottom:.45rem }
+
+.bay-tel{
+  display:flex; justify-content:space-between; gap:.5rem;
+  padding:.55rem .95rem .5rem; border-top:1px solid var(--line);
+  font-size:0.7rem; letter-spacing:.1em; color:var(--grey);
+  font-variant-numeric:tabular-nums; flex:0 0 auto;
+}
+.bay-tel b{ font-weight:500; color:var(--ink) }
+.bay-bar{ height:2px; background:var(--panel-2); flex:0 0 auto }
+.bay-bar i{ display:block; height:100%; width:0; background:var(--uv) }
+
+/* the bay only exists once there is a margin wide enough to hold it —
+   these come last so they win over the display:none the panel starts from.
+   The column gets wider here rather than narrower: the machine is taking its
+   width out of margin the memo was never using. */
+@media(min-width:1180px){
+  :root{ --bay:clamp(300px,23vw,440px); --colw:1180px; --maxw:var(--colw) }
+  body{ padding-right:var(--bay) }
+  .bay{ display:flex }
+  /* the right edge belongs to the machine now, so the toggle crosses to the
+     empty left one. While the strip nav owns the top it stays at the foot;
+     above 1830 the strip is gone and it lines up with the rail instead. */
+  .tt{ left:14px; right:auto; top:auto; bottom:14px }
+  .mnav{ display:block; right:var(--bay) }
+  /* 195 px of rail + the memo + the bay does not fit on a laptop; below the
+     width where all three clear each other, the strip nav stands in */
+  .rail{ display:none }
+}
+/* Once the rail comes back the two margins stop wanting the leftover space
+   equally. The right one only has to clear the machine — a thumb's width of
+   air, the memo is meant to sit against it — while the left one has to hold
+   195 px of rail. So the right takes a sixth and the left takes the rest.
+   Two custom properties, so the column, the rail and the toggle cannot
+   disagree about where the left edge is. */
+@media(min-width:1830px){
+  :root{
+    --colr:max(2rem,(100vw - var(--bay) - var(--colw))*.18);
+    /* 195 px of rail + 14 off the screen edge + air. At the bottom of this
+       range the three of them do not all fit at full width, and it is the
+       column that gives, never the rail's gutter. */
+    --maxw:min(var(--colw),calc(100vw - var(--bay) - var(--colr) - 223px));
+    --railx:max(14px,calc(100vw - var(--bay) - var(--maxw) - var(--colr) - 209px));
+  }
+  .wrap{ margin-left:auto; margin-right:var(--colr) }
+  .mnav{ display:none }
+  .rail{ display:block; left:var(--railx) }
+  .tt{ left:var(--railx); top:14px; bottom:auto }   /* one left edge, shared */
+}
+
+/* ══════════════════════════════════════════════════════════════════
    MOTION / PRINT
    ══════════════════════════════════════════════════════════════════ */
 @media(prefers-reduced-motion:reduce){
@@ -814,8 +930,8 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
     --glow:transparent; --shadow:none; --shadow-lg:none; --grid-a:transparent;
     color-scheme:light;
   }
-  .rail,.mnav,.ctl-row,.tt,.swipe,.gate,.glc,.glc-scrim,.glh,.gl-tip{display:none!important}
-  html,body{overflow:visible;height:auto}
+  .rail,.mnav,.ctl-row,.tt,.swipe,.gate,.glc,.glc-scrim,.glh,.gl-tip,.bay{display:none!important}
+  html,body{overflow:visible;height:auto;padding-right:0}
   body{background:#fff}
   /* hover cannot survive paper, so the dotted words become footnotes */
   .gl{text-decoration:none;background:none;color:inherit}
@@ -870,6 +986,36 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
   </div>
 </div>
 
+<!-- ══════════════════ THE MACHINE BAY ══════════════════
+     Parked in the right margin for the length of the memo. One print job,
+     paced by the scrollbar: hood off, plate down, then 130 mm of face drawn
+     up out of the resin. Everything below the liquid line is clipped away,
+     because in this machine that part genuinely does not exist yet. -->
+<aside class="bay" id="bay" aria-label="A resin printer working through one 130 mm face as you read">
+  <div class="bay-head">
+    <span><b>Photon Mono 2</b></span>
+    <span class="bay-st" id="bayState"><i></i><span id="bayStateT">Idle</span></span>
+  </div>
+
+  <div class="bay-stage">
+    <canvas id="bayCanvas" aria-hidden="true"></canvas>
+    <p class="bay-note" id="bayNote">Loading the machine&hellip;</p>
+  </div>
+
+  <div class="bay-cards" id="bayCards">
+    <p class="bay-card on"><b>01 · The hood</b>Orange, because it stops daylight curing the vat. Everything that matters happens under it, in the dark, in a tray of liquid.</p>
+    <p class="bay-card"><b>02 · The cure line</b>A screen flashes one whole slice at a time. Above the liquid the face is solid; below it, nothing has been decided yet.</p>
+    <p class="bay-card"><b>03 · Off the plate</b>130 mm of cured resin, &#8377;265 of material. Wash it, cure it, paint it &mdash; that part is still your hands.</p>
+  </div>
+
+  <div class="bay-tel">
+    <span>Layer <b id="telLayer">0</b>/2600</span>
+    <span>Z <b id="telZ">0.0</b> mm</span>
+    <span><b id="telPct">0</b>%</span>
+  </div>
+  <div class="bay-bar"><i id="telBar"></i></div>
+</aside>
+
 <div class="wrap">
 
 <!-- ══════════════════ HERO ══════════════════ -->
@@ -899,13 +1045,13 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
 
     <figure class="hero-fig">
       <svg id="headSvg" class="ch" viewBox="0 0 460 476" role="img"
-           aria-label="A human head and bust drawn as stacked horizontal print layers, turned three-quarters, annotated 130 millimetres from crown to chin.">
+           aria-label="A scanned human head drawn as stacked horizontal print layers, turned three-quarters, annotated 130 millimetres from the crown to the cut at the neck.">
         <g id="headLayers"></g>
         <g class="fadein" style="--d:1.2s">
-          <path class="dimline" d="M368 52 h20 M368 306 h20 M378 52 V160 M378 198 V306"/>
-          <path class="dimline" d="M373.5 57 L378 52 L382.5 57 M373.5 301 L378 306 L382.5 301" stroke-linejoin="round"/>
-          <text class="t-l c-uvt" x="378" y="177" text-anchor="middle">130</text>
-          <text class="t-s c-mut" x="378" y="191" text-anchor="middle">mm</text>
+          <path class="dimline" d="M368 52 h20 M368 396 h20 M378 52 V205 M378 243 V396"/>
+          <path class="dimline" d="M373.5 57 L378 52 L382.5 57 M373.5 391 L378 396 L382.5 391" stroke-linejoin="round"/>
+          <text class="t-l c-uvt" x="378" y="222" text-anchor="middle">130</text>
+          <text class="t-s c-mut" x="378" y="236" text-anchor="middle">mm</text>
         </g>
       </svg>
       <figcaption class="hero-cap">The object, drawn the way it is made: one <span class="gl" data-t="cured">cured</span> layer at a time</figcaption>
@@ -1441,7 +1587,7 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
 
 <footer>
   <span class="flbl">Sources, assumptions and error bars</span>
-  <p>Prices are India market rates including 18% GST, mid-2026, and drift. Print times assume a modern tilt-release resin machine. Scan accuracy is from a clinical validation of iPhone TrueDepth against a 3dMD stereophotogrammetry system. Resin volumes estimate a hollow 2 mm shell plus 20% for supports. Costs cover materials and consumables only. Labour is stated in hours rather than rupees throughout, because it is the constraint and not a line item.</p>
+  <p>Prices are India market rates including 18% GST, mid-2026, and drift. Print times assume a modern tilt-release resin machine. Scan accuracy is from a clinical validation of iPhone TrueDepth against a 3dMD stereophotogrammetry system. Resin volumes estimate a hollow 2 mm shell plus 20% for supports. Costs cover materials and consumables only. Labour is stated in hours rather than rupees throughout, because it is the constraint and not a line item. The head on the machine is a real scan &mdash; <a href="https://sketchfab.com/3d-models/male-head-nov-10-23d4ee851ab7462bb75c546fcf38ec59" target="_blank" rel="noopener">Male head Nov. 10</a> by C.J. Goldman, used under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</p>
 </footer>
 
 <!-- built by JS from the glossary data; only ever seen on paper -->
@@ -1587,61 +1733,134 @@ var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: re
    cross-section of a head projected in 3/4 view; layers are returned
    top→bottom so the lower discs correctly overlap the ones above.       */
 var BUST=(function(){
-  /* [u, halfWidth, depth].  u = 0 at the crown, 1 at the cut base of the bust.
-     Shoulders stay wide-but-shallow, otherwise they render as stacked saucers. */
-  var P=[
-    [0.000,0.15,0.19],[0.040,0.48,0.58],[0.090,0.70,0.83],[0.150,0.85,0.97],
-    [0.220,0.93,1.05],[0.300,0.98,1.09],[0.380,1.00,1.10],[0.460,0.96,1.07],
-    [0.540,0.89,1.01],[0.610,0.79,0.93],[0.680,0.64,0.79],[0.730,0.49,0.64],
-    [0.775,0.38,0.51],[0.815,0.35,0.46],[0.855,0.41,0.49],[0.895,0.55,0.53],
-    [0.935,0.75,0.56],[0.970,0.90,0.58],[1.000,1.00,0.59]
-  ];
-  /* Below the jaw the chart needs a real chest, not the hero's plinth: at
-     42 px tall, shoulders are the whole reason the thing reads as a person.
-     [v, front reach, back reach], picking up from the head at v = HEAD_END. */
-  var S=[
-    [0.520,0.666,0.607],[0.565,0.572,0.532],
-    [0.620,0.596,0.556],[0.665,0.672,0.632],
-    [0.720,0.808,0.778],[0.790,0.918,0.888],
-    [0.870,0.985,0.950],[1.000,1.030,0.990]
-  ];
-  /* the hero head, crown to just under the chin (u 0→0.74), occupies this much
-     of the shouldered bust — so v/SHRINK converts back to hero u. Taking over
-     above the hero's thin neck is what keeps the join from reading hourglass;
-     keeping the chest no deeper than the head is what keeps it off the chess board. */
-  var HEAD_END=0.520, SHRINK=HEAD_END/0.74;
+  /* The scan's own outline, measured off head.glb by tools/prepare-scan.mjs:
+     how far the object reaches from its own vertical axis, at 96 heights —
+     0 the crown, 1 the cut through the neck — and 72 bearings, a quarter turn
+     being the nose. Radii are a fraction of the object's height, each quantised
+     to one byte of RMAX. It travels as data inside the page because the busts
+     are drawn long before the 3D model loads, and on narrow screens where it
+     never loads at all. Regenerate with:  node tools/prepare-scan.mjs head.glb */
+  var LV=96, BR=72, RMAX=0.34951, TAU=Math.PI*2;
+  var D =
+    "LiwoIyMjIR0fHxwdFxscGxsRGxscGhscHhseHyAgIiQmKCwsMDM5PUJIT1VaYWRpa21vb3Bub29vb25raGRfW1VOSEI/OjIy" +
+    "R0M+Pjs5NzY1NjU1NTU2NTU2NTQzNjU1NTU1Njc3OTs+PkNFSk1UWV9kaW5yeHt9gIGDhoaHh4aGg4KAfHp4cm9pYl5ZU05M" +
+    "WVVRTUtIRkdFRUVGR0hJS0tLSkpKSUhHRkZGRkhHSUtMU1VaXmNna3F1en+Eh4qNj5CTlZeYmJeWkpCOjIqGhH96dnBrZ2Fe" +
+    "aGJeXFpUVVNTUlRVVllaXF1dXV1cW1lWVFJTU1RVVFdcX2NnbHF1en6Dh42QlZeYm5ygoqWmpqWin5ybmJWVkY2IhH96dXBs" +
+    "c3BsZ2ZiYWBfX2BhZGdqa2xtbW1raWdkYl9fX19hY2Voa29zeHyDhYyPlZmdn6Kkpqirrq+xsbCuq6imo6KfnZmTj4uHgXx3" +
+    "fXp1c29tbGlqamttb3R2eHp6enl4dnRxbWtqaWtrbm9ydnl9gYeNkZebnqKoqqyur7K1t7q7u7q4tbKwrqyqp6SgmpeRjIiC" +
+    "hoB9enh3dXR0dXV3e36BgoOEhYSDgX57eHZ0dHR1d3l7fYGFi5CWm6Glqq2xtLa3ubu9wMLDw8LAvbu5t7W0sa2ppaCblpGK" +
+    "jImFgoB/fn19f3+DhIiLjI6Ojo6Ni4iGg4B+fn1+f4CChomNkpmeo6iusra6vb7AwcPFx8rKysnHxcTCwL69urWyramjnpiT" +
+    "lI+LiIeGhYaGh4mLj5KUlpaWlpaVlJKPi4mHhoWFhoaIi46TmZ6kqa+0ur7BxMbIycvNztDQ0NDOzMvJyMfFwb65ta+ppJ6Z" +
+    "mJSQjoyLjI2OkJOUl5qcnZ2enZ6dnJqYlZKQjo2Mi4yNkJOYnaOpr7S6wMTIy87P0NLT1NXV1dXU09HQz83LyMTAurWuqaKd" +
+    "m5eUkpGRkpOWl5qcn6GjpKSkpKSko6KgnZqYlpSSkZGSlZecoaets7rAxcrO0tTV19fY2dra2trZ2NfW1dTRzcrFwLqzraah" +
+    "n5yYlpaXl5mcn6Gkp6mqqqqqqqurqqinpKGenJmYlpaXmJufpKqxt77Eyc7T1tja29zd3t7f39/e3dzc2tjW087Kw763sKql" +
+    "o56cm5qcnZ+hpKeqra+vsLCwsLCwsK+tq6ekop+dnJqanJ+ip66zusHIztLX2t3f4OHi4+Pi4uPj4uHg39zb19PNyMG6s62n" +
+    "paGfnp6goqOnqa2ws7S1tbS0tLW1tbSzsKyqpqShoJ+en6KlqrC2vcTK0dbb3+Hj5OXm5+fn5+fn5uXk4+He29bRysS9trCp" +
+    "qKSjoqKkpqiqrbG0t7i5ubi4uLi5ubm4tLGtq6imo6Oio6Snq7G5v8XN1Nre4uTm6Onq6+vq6uvr6uno5uTi3tnUzca/ubKr" +
+    "qaelpaanqayusLW4u7y9vby8vLy9vb27ubWwrqyqp6akpaaprbS6wcjP1d3i5ejp6+3t7u7u7u7u7u3s6ufl4d3Vz8jAurOt" +
+    "q6inp6mrrK+xtLe8v8DAwL+/v7/AwMC/vLezsa+sqqmnp6irr7W7wsjQ197k6Ovt7/Dx8fHx8fHx8fDu7evo5N/X0MnCu7Wv" +
+    "rKqpqautr7G0trq+wcLCwsLBwcLCwsLBvrq2s7Gvraupqaqssba8w8rR2eHn6+7w8vP09PTz8/P09PPy8O7r5uHZ0crDvbax" +
+    "rqyrq62vsbS1uLvAw8TExMTExMTExMTDwLy4tbOxr6yrqqyusre9w8vS2uLp7fDy9PX29vb19vb29vX08vDt6ePb0srDvbey" +
+    "r62srK6ws7a4ur3BxMXFxcbGxsXFxcXEwb26uLazsK6srK2vs7e9xMvT2+Pr8PP09vj4+Pj4+Pj4+Pj29PPv6uTc0svDvbez" +
+    "sK6tra6xtLe5u77CxcbGxsfHx8fGxsbFwr67ube0sa6tra6ws7i9w8zT3OXs8vX3+fr6+vr5+fr6+vr49/Tx7OXc1MvEvbez" +
+    "sa+ura+xtbi7vb/CxcbGx8fIyMfHxsbFwr+8u7i0sa+urq+ws7i9xMvU3ebt8/b4+vz8/Pv7+/v8/Pv6+Pbz7ube1MvEvbez" +
+    "sa+urq+xtbm8vsDCxcbHx8jIyMjHx8bFw8C+vLm0sa+urq+xs7e8w8vU3ufv9Pf6/P39/f38/P39/f38+vj07ufe1MvEvLaz" +
+    "sK+urq+xtLm9v8HDxsfHx8jIyMjHx8fGw8G/vbm0sa+urq+ws7a8wsvU3ufv9fn7/f3+/v39/f3+/v79+/n17+fe1MvCu7ay" +
+    "r66urq6wtLi9wcPFx8jIx8jIyMjIyMjHxcPBvbmzsK6urq+wsrW7wsrU3efv9vr8/v7//v79/f7+//7+/Pr27+fe1MrCu7Wx" +
+    "r62tra6ws7i+w8bJysvKycnJycnJysvKycfDvrizr66tra2usLO5wMrU3efw9vr9/v////7+/v7////+/fr28Ofd1MrAubOw" +
+    "raysrK2vsri+xcrNzs7NzMvLy8vMzc7OzcvEvrizr62srKytrrG3v8jS3efw9vr9/v////7+/v7////+/fr28Ofd08i/t7Gu" +
+    "qqqqq6yusbi/x87R0tLPzs3Nzc3O0NHS0c7Hv7ixr6yrqqqrrK+108fS3Obw9vr9/v////79/f7////+/fr28Obc0sjTta+s" +
+    "qKioqauusra/yM/T09PSz8/Pz8/P0tPU09DIv7exrqupqKioqb7T4uPR2+Xv9vr9/v///v79/f7////+/fr27+bb0uPi076p" +
+    "pqanqKutsre/ydDT09PT0dHQ0NHR0tPU09DJv7eyrqqopqampsLT5ejQ2uTu9fn8/v7+/v38/P3+/v7+/Pn17uTa0Ojl08Kl" +
+    "pKSlp6qusre/yc/S0tPS0dHQ0NHR0tPS0s/JvreyrqqnpqSko8DC5uzO2ePs9Pj7/f39/fz7+/z9/f39+/j07eLZz+zlwsCj" +
+    "oqOlp6uusre+yMzMzc/Q0dHQ0NHR0M/MzczIvreyrqqnpaOiobi52O7r1+Hr8vf6/Pz8/Pv6+vv8/Pz7+vfz6+HX6+7Yubih" +
+    "oqOlqKuvs7e8xMfJyMfHy83Pzs3Lx8fIycfEvbezr6uopaOioLC02+/u1d/p8fX5+/v6+vn4+Pn6+vv7+fXx6d/U7u/btLCg" +
+    "oqOlqK2ws7a6wMTFxMC8vsnLy8nAvMDDxcPAurazsKyppaOioKq33u/v0dzm7/T3+fn5+Pj29vf4+fn49/Tv5tzR7+/etqqg" +
+    "o6Smqa6ytLa4u73BwbW2ucTHx8W5trXBwb27uLa0sa6ppqSjoabB3+/vztji7fL19/f39/X19fb39/f39vLt49fO7+/fwKeh" +
+    "o6Wnq6+ztLW2t7a4s5iptMHIyMGzqZi0uLa3trW1s6+rp6SjoaPE4O7uy9Xh6vDz9PX19fPy8vP19fX08/Dp4dXL7u7gxaOh" +
+    "o6Woq7C0tba2tra7u7qysMDMzMCwsrm7u7a2tra1tLCrqKWjoaen4O3tydPd5+7x8vPz8vHx8PHz8/Py8e7o3dPK7e3gp6eh" +
+    "o6WorLC0tra2t7e6u7qys8TR0cS1srq7ure3tra2tLCsqKWjoays3+vrx87b5evv8PDx8O/u7e/w8PDw7+zl287H6+zfrKyh" +
+    "o6WorLC0tra3t7e3trWyucnW1sq5srW2tre3t7a2tLCsqKWjoa2t3enpxczZ4+js7e7u7u3s6+3u7u7t7Onj2cvF6endra2h" +
+    "oqWorLC0tre3uLi4t7W4v9Hc3M+/uLW3uLi4t7e2tLCsqKWioays2+bmwsnX4efq6+vr6+rp6err6+vr6efh18vB5ufbrKyh" +
+    "oaSnq6+ztba3ubq6urq8xNXi4tTEvLq6urq5t7a1s6+rp6Sgoai+1+PiwcbU3uTn5+no6ejn5+jp6Ojo5+Te1MfB4uTXvqih" +
+    "oKOmqq6xtLa3ubu8vb2/x9rp6drHv729vLu5t7a0sa6ppqOgoKjB0eDcv8fR2+Hk5eXm5ubl5eXm5uXl4+Hc0se+2uDRwaig" +
+    "n6KkqKyws7W3uby+vr/Cyt7w8N7Kwr++vry5t7WzsKyopKGenqzB0N20u8XQ2d/h4uPk5OPi4uPk4+Li4N/Z0MW7tNzQwaye" +
+    "nZ+ipqmtsLO2uby+v8HEy+T39+TMxMC/vry5trOxrammoqCena3A0dexusHN1tve3+Dh4eDf4ODh4ODg3tzWzcK5sNfRv6yd" +
+    "nJ6go6WprrG0uLy+wMLFzOr8/OrMxcLAvry4tLGuqKajoJ6cmqi9z9GutsDI09jb3N3e3t7d3d7e3t3c29jTyr64rtHOvaia" +
+    "mpyeoKOmqq6ytru+wMLG0vP9/fLTxsPAvru3sq6qpqOgnpyal6i7ycmqtb3Gz9XY2drb3NvZ2dvc29va2NXPx720q8nJu6iX" +
+    "mJucn6Gkp6qvtLq+wMPG2PT9/fTYxsPAvrq0r6unpKGenJqYlaa6wJyns7rDzNHV19jZ2djY2NnZ2djX1dHMw7uyp5vAuqaU" +
+    "l5mbnZ+ipaitsri9wMTG1/L8/PHXxsTAvbiyrKelop+dm5qXko61tZmlsLi/x87S1dXW1tbV1dbW1tbU0s7Iv7iwpZi1tI6T" +
+    "lZianJ6go6arsbe8wMXH0uv4+OvQx8XAvLexq6WjoJ6cmpmWkYyKjpSjrra9xcvP0tPU1NPS0tTU1NTSz8vEvbauopWOioyR" +
+    "lZianJ2goqSor7W7wMXIy9Tv7tTLyMXAu7WvqKWioJ6cmpiVkIqHi5KirLO6wsjNz9HS0tHQ0NHS0tHQzcjBurSsoZKLh4qR" +
+    "lJeZm52foaOorbS6wMXJztfd3dfOycXAu7SuqKOhn52bmZeUkImFiZGhq7G4v8bLzs/Q0M/Ozs/Q0M/Oy8a/uLKroJGJhomQ" +
+    "lJaYmpyeoKKnrLO6wMbK0drd3trSycbAurOsp6OgnpyamJaUj4mEiZKgqrG3vsTKzc7Ozs3Nzc3Ozs7NysS+t7GqoJKJhYmQ" +
+    "k5aYmZydn6KlqrG5wMXK1Nvf39vUysXAubGqpaKgnZuamJaTj4iEiZKgqa+1vcTJzM3Ozc3MzM3Nzs3MycS9tq+poJOJhIiP" +
+    "kpSWmJqcnqCkqLC4v8TJ1tnf39nVycS/uLCppKGenJqYlpSSjoeDiZSgqK61vcXKzc7Ozs3Nzc3Ozs7NysW9ta+ooJSJg4eO" +
+    "kZOUl5mbnaCipq63vsLI0NHb29HPyMK+tq6nop+dm5mXlJORjIaDipWgqK61v8bLzc/Pz8/Pz8/Pz8/Oy8a+tq6noJWKg4aM" +
+    "j5GTlZeZnJ6hpKy1vMDBztXW1tXOwsC8tauloZ6bmpeVk5GPioWDi5agp662v8fMz9HR0dHR0NHR0dDQzMe+tq2nn5aKg4WL" +
+    "jI+Qk5WYmpyeoqqyur7D0NbX19bPwr66sqqinpyamJWTkI+Mh4KCi5efpq23wcjO0dPT09PT09PT09LRzsjAt62nn5aLgoKH" +
+    "iYyNj5OVmJqdoaeut7zCz9bX19bPwry4rqehnpuYlZOQjoyJhX+CjJafpa23wcrQ09TV1dbW1tbV1dXT0MrCtq2ln5eMgn+F" +
+    "hYmKjY+SlZmcn6WstLrBy9HT09HLwbq0raagnJmVko+Ni4iGgXyBjJaepa23wsvS1dfX19jY2NfX19fV0svCt62lnpaMgXyA" +
+    "gYOHiYyOkpaanqOqsbe/yMvKy8vIv7exqqSempaSjouJh4SBe3qAi5ado6y4w83T19jZ2tra2tra2djX0s3DuKyknZWMgHp7" +
+    "en6BhIeKj5OYnaOpr7a9xMbExcbFvbavqaOdmJOPioiEgX56dneAi5Sbo6y4xM3V2Nrb3Nzc3Nzc29rZ1c7EuKyinJWLgHh2" +
+    "cXZ6f4KHi5GXm6KorrW8wsTFxcTCvLWuqKGclpCMhoF/e3RycXZ/i5Oaoqy4xc/X2tzd3t7e3t7e3dza19DFuayim5OKf3Zx" +
+    "a2xxd3yBh42UmqGnrbW8wcbIyMXCvLWup6CalI6HgHx2cG1rb3V/ipKZoau5xtHY3N7f39/g4N/f397c2NHGuayhmpOKf3Vu" +
+    "aGdnam52gIaPlp+mrrW9w8fJycfDvbWupp6XjoZ+dW1qaGdobHR+iZGYoau6yNPb3uDg4ODh4eHg4N/e29PIuqyhmZKJf3Rs" +
+    "ZWNjYmNkaHSFkJqjrLS8w8jIyMjDvLSspJqQhXRoZGNiY2Nma3R/iZGYoKy7ydTc3+Hh4uLj4+Li4eHg3NTJu6ufmJGJf3Rr" +
+    "ZGFgX15eXmBkco6bqLK8w8fHx8fDvLKonI5yZGBeXl9fYGFkanWAiZCXoa28ytbd4eLj4+Tk5OTj4+Lh3dXKu6ugl5GJgHVq" +
+    "Yl9dXFxaWlpaXF5qm625wsbGxsbBua2bZ19cWlpaW1xcXV5janWBiZCYoK69y9ff4uTk5OXl5uXk5OTi39fLva2gl5CJgHVq" +
+    "Yl1bWVlYV1ZWVldYWVuyvcLCwsK9sV1ZWFZWVlZXWFlZWl1haneCiZCYoa+/zNjg4+Xl5efn5+fl5eXj4NnMv6+imJCKgndr" +
+    "YVtYV1ZVVFNTUlJSU1JUsLm6urmxVFJTUlJSUlNUVVZXWFtha3iDipCYorDAzdnh5Obn5+fn5+fn5ubk4drNwK+il5CKgnhs" +
+    "YVpWVVNSUVBQT05OTk5PT09OTk5PTk5OTk5PT1BRUlNVVlphbHqDipCZpLHAz9ri5efn5+fl5efn5+fl4drPwbKjmZGKg3pt" +
+    "YVlUUk9PTk1MS0tLS0tLTExLTExLS0tLS0tLTE1OUFFSVFlhb3uEi5GapLHD0Nvj5ufn49vW19vi5+fm49vQw7KkmpCLhHtv" +
+    "YlhST01MS0pJSEhISEhJSUpKSkpJSUhISEhISEpLTE5PUlhib32Fi5KbprXE0Nvj5ufe08/MzM/U3ufm49vQwrWlm5KLhX1v" +
+    "Y1dQTUpJR0ZGRUVFRkZHR0hISEhHR0ZFRUVFRUZISUpMUVdicn6Gi5Kcp7bE0Nzj5dzRyMXCwsXI0d3l49zQxLWnm5KMhn5y" +
+    "ZFdOSkZFRERDQ0JCQ0RFRkZGRkZGRURDQkJDQ0NERUVKTldkdH+GjJOdp7fF0dvi4s/HwLy5ubzAx87i4tzRxbinnJOMhn90" +
+    "ZVZNR0RCQUFBQEBBQUJDRUVFRUVFREJBQUBAQUFBQkNHTVZmdH+GipOdprnF0dze0MO8trSysrO2vMPN3tzRxbmqnZOMhn91" +
+    "Z1dLRUFAPT0+Pj8/P0BBQ0NDQ0NDQUA/Pz4+Pj49P0FFS1dndn+Gi5Oeq7nF0dnUwrmyrqypqayusrnC0NnRxrqrnpOLhn92" +
+    "aVhKQz89PDs7PDw8PT4/QEFBQUFAPz49PDw7Ozs7PT9DSldodn+Fi5Sfq7rG0dPFuK+pp6WjpKWnqa+4xdPRxrqsn5OLhX92" +
+    "aVdKQj07OTg4OTk5Ojs8PT4+Pj49Ozs7OTk5ODk5Oj1CSVhpdX6Ei5SfrbrGzca3q6Win5ubm52foqWqtsXNxrqun5SLhH52" +
+    "aVlJQTw5NzY1NTY2Nzg4OTk5OTk5ODc2NjY1NTY3OTxBSVhpdX2DipOgrrvFx7WoopyYl5aRlZaXmJ2iqLfHxbuuoJSKg311" +
+    "aVlJPzo3NTMyMjIyMzMzMzQzMzQ0MzIyMjIyMjM0Nzo/SVhpdXyCipOhr7rAs6Wbl5SQkI+Njo+QkZKXnKW0wLuvoZOJgnx0" +
+    "aFlHPjg0MS8uLi0tLS0tLS0tKy0sLS0tLS0uLzAyNDg+SFlpcnqAiZShsLixoZeOjouIh4eHh4eHiYqOkZaisriwoZSJgXpz" +
+    "Z1lHPDUxLiwqKicoJycnJiUlJSUnJicnKCgqKywuMTU8SFlocXmAiJSjsLGakoqEgn+Af39+f39/gH+DhYmRnLGwo5SIgHlx" +
+    "ZllGOzMuKigmIyMiIiEgIB8cHx0gICAiIiMjJigrLjM6R1lmb3iAiJSkqZiKg356eXd3d3V2dnd3dnd5en6DiJiqpJSJgHhw" +
+    "ZlhHODAqJyQiIB0dGxoaGhoZGRoaGhobHB0gISMnKzA4R1hkbnd/iZagnYZ7d3Btbm1tbW1tbW1tbW1vbXN2eoOYoJaJf3dv" +
+    "Y1hJNy0oIyAdGhkYFRYVFRMUExQVFRYVGBobHSAkJy03SFhkbneAiZaXhHdxa2dmZWNiYmFhYmFiYmNkZGRrcXeEl5aJgHdu" +
+    "ZFhKNywlIBwaFxUTExIQEREQEhEQERITExUXGh0gJSw3SlhkbXaAi4+DdGtgX11aWlhWV1ZUVFVXWFdaWl5cZGp0g4+LgHZt" +
+    "Y1hLOisjHhkWFRMSEQ8QDw8PDw8PEBAQEREVFxoeJCs7S1hjbHaBh4JwZ1lYVFFPTk1NS0pLSUlMTE1NUVNUWltha32HgXZs" +
+    "YlhMPS0jHBgVExEQDw8ODg0NDQ0ODg4PEBETFRgcIi0+TFdia3aAgGtdVVBNSkZFQ0FBQEA/Pz4+QEFER0dLTVBWXmmAgHZr" +
+    "YVdMQTAjHBcUEhEPDw4NDQ0NDQ0NDQ4PDxESFBccIjBBTVhha3Z4aVpRRUVAPzw4ODczNTExNTE2Nzc5OTw+QUdITlJkeHZr" +
+    "YFdNQjYlHBgVEhEPDg4NDQ0NDQ0NDQ4ODxASFRgdJjVDTVdga3BnU0ZEPzo1NC8wLSspJysoKicpKS0tLy80Nzo/RExRYXBr" +
+    "YVdORTkpIBoXFBEQDw4ODg4NDQ4ODg8PEBEUFhsfKTpETldgZ2JQPTw1MCgsJyMkHh0eGyEbGCEbHyIgIycoKSowNTk/SGNn" +
+    "XVdORjwyJh0ZFhQTERAQDw8PDg8QDhARERMWGB4kMj1FT1ddXkU6MiooJCEbHhoXGRETExESEhITExgZFxodHSEiJCcwOkdd" +
+    "VFRPRz82LCIdGxYVFBIRERIRERISERQUFhgZHiQsNj9HTlRUNyomGx0VFhIRDw4NDQwLCwsLCwsLCwsNDQ4PDhIWGBsbJyo4" +
+    "J0tLRj85MSskHx0ZGRcXFhYWFRUWFhYYGR0gJCsyOT9GS0knFxQQDQoGBgYFBQUEBAQDAwMDAgMDAwQEBAQFBQUGBggJCgwZ" +
+    "QEBAQD45My4qJiMfHhwbGhsXCRoYHB0eICMmKi4zOT5AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA" +
+    "MzMzMzMzMS0qJyQiIR8eHh0dHR0eHh8hIiQnKi4yMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMz";
+  var R=new Float64Array(LV*BR);
+  (function(){ for(var s=atob(D),i=0;i<R.length;i++) R[i]=s.charCodeAt(i)/255*RMAX; })();
 
-  function cr(p0,p1,p2,p3,t){
-    var t2=t*t,t3=t2*t;
-    return 0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
+  /* how far the object reaches at height u and bearing th, bilinear between
+     samples so nothing in the drawing lands on a sample boundary */
+  function samp(u,th){
+    var fu=(u<0?0:u>1?1:u)*LV-0.5;
+    if(fu<0) fu=0; else if(fu>LV-1) fu=LV-1;
+    var l0=fu|0, l1=l0<LV-1?l0+1:l0, tu=fu-l0;
+    var fb=(((th%TAU)+TAU)%TAU)/TAU*BR, b0=fb|0, tb=fb-b0;
+    b0%=BR; var b1=(b0+1)%BR;
+    var t=R[l0*BR+b0], u1=R[l0*BR+b1], v=R[l1*BR+b0], w=R[l1*BR+b1];
+    var a=t+(u1-t)*tb, b=v+(w-v)*tb;
+    return a+(b-a)*tu;
   }
-  function tbl(T,u,i){
-    var k=0;
-    while(k<T.length-2 && T[k+1][0]<u) k++;
-    var a=T[Math.max(0,k-1)], b=T[k], c=T[Math.min(T.length-1,k+1)], d=T[Math.min(T.length-1,k+2)];
-    var t=Math.max(0,Math.min(1,(u-b[0])/((c[0]-b[0])||1)));
-    return Math.max(0.02, cr(a[i],b[i],c[i],d[i],t));
-  }
-  function prof(u,i){ return tbl(P,u,i); }
-  function gauss(u,c,s){ var d=(u-c)/s; return Math.exp(-d*d); }
-  /* brow at .33, nose tip at .51, lips at .60, chin at .70 */
-  function narrow(u){ return 0.38*gauss(u,0.51,0.055) + 0.09*gauss(u,0.60,0.032) + 0.13*gauss(u,0.70,0.045); }
-  function wide(u){ return 0.07*gauss(u,0.33,0.060); }
-  function occiput(u){ return 0.11*gauss(u,0.32,0.170); }
-
-  var ASPECT=114/344;   /* half-width of the widest cross-section, over height */
 
   /* ── the hero's view: cross-sections turned three-quarters ── */
   var PSI=-1.00, CP=Math.cos(PSI), SP=Math.sin(PSI), PITCH=0.30;
   function ring(cx,top,H,u,M){
-    var Sx=H*ASPECT, yb=top+u*H;
-    var a=prof(u,1)*Sx, b=prof(u,2)*Sx;
-    var fn=narrow(u)*Sx, fw=wide(u)*Sx, bb=occiput(u)*Sx, d="";
+    var yb=top+u*H, d="";
     for(var k=0;k<=M;k++){
-      var th=(k/M)*Math.PI*2, s=Math.sin(th), c2=Math.cos(th);
-      var f=Math.max(0,s), bk=Math.max(0,-s);
-      var x0=a*c2;
-      var z0=b*s + fn*Math.pow(f,4.5) + fw*f*f - bb*bk*bk;
+      var th=(k/M)*TAU, r=samp(u,th)*H;
+      var x0=r*Math.cos(th), z0=r*Math.sin(th);
       var xr =  x0*CP + z0*SP;
       var zr = -x0*SP + z0*CP;
       d += (k?"L":"M") + (cx+xr).toFixed(1) + " " + (yb + zr*PITCH).toFixed(1);
@@ -1661,40 +1880,36 @@ var BUST=(function(){
   /* ── the chart's view: the same object, side on ──
      Four objects side by side is a comparison of heights, and in profile the
      brow, nose and chin still say "a person" at 42 px, where a three-quarter
-     view collapses into a vase. How far the object reaches forward (nose side)
-     and back (occiput side) of its centre line, at height v, in Sx units. */
-  function reach(v){
-    if(v<=HEAD_END){
-      var u=v/SHRINK, b=prof(u,2);
-      /* half the brow: at this size the full ridge turns the forehead into a beak */
-      return [b+narrow(u)+0.5*wide(u), b+occiput(u)];
-    }
-    return [tbl(S,v,1), tbl(S,v,2)];
-  }
+     view collapses into a vase. How far the object reaches forward (the nose)
+     and back (the occiput) of its centre line, at height v. */
+  function reach(v){ return [samp(v,Math.PI/2), samp(v,-Math.PI/2)]; }
 
   /* One printed layer: the slab between two cross-sections. Stacked with a
      hairline of background between them, they are the object AND its
      print lines. Returned top→bottom. */
   function slabs(cx,base,H,N){
-    var Sx=H*ASPECT*SHRINK, step=1/N, out=[];
+    var step=1/N, out=[];
     for(var i=0;i<N;i++){
       var v0=i*step, v1=(i+1)*step, d="", k, v, r;
       for(k=0;k<=3;k++){                       /* down the face */
         v=v0+(v1-v0)*(k/3); r=reach(v);
-        d += (k?"L":"M")+(cx-r[0]*Sx).toFixed(2)+" "+(base-(1-v)*H).toFixed(2);
+        d += (k?"L":"M")+(cx-r[0]*H).toFixed(2)+" "+(base-(1-v)*H).toFixed(2);
       }
       for(k=3;k>=0;k--){                       /* and back up the skull */
         v=v0+(v1-v0)*(k/3); r=reach(v);
-        d += "L"+(cx+r[1]*Sx).toFixed(2)+" "+(base-(1-v)*H).toFixed(2);
+        d += "L"+(cx+r[1]*H).toFixed(2)+" "+(base-(1-v)*H).toFixed(2);
       }
       out.push({d:d+"Z", u:v1});
     }
     return out;
   }
-  /* the footprint the object stands on, for the shadow it casts on the shelf */
+  /* The shadow it casts on the shelf, taken across the neck rather than at the
+     very bottom: the scan ends in a cut that slopes up from under the chin to
+     the nape, so its last few per cent is a feathered edge that would throw no
+     shadow at all, and reach(1) is nearly nothing. */
   function footprint(H){
-    var r=reach(1);
-    return (r[0]+r[1])/2 * H*ASPECT*SHRINK;
+    var r=reach(0.86);
+    return (r[0]+r[1])/2 * H;
   }
 
   return {layers:layers, slabs:slabs, footprint:footprint};
@@ -1880,22 +2095,41 @@ var BUST=(function(){
       chips=[].slice.call(document.querySelectorAll(".mchip")),
       fill=document.getElementById("railFill"), mprog=document.getElementById("mprog"),
       mnav=document.getElementById("mnav"), head=document.getElementById("hd"), tick=false;
+
+  /* Where each section starts, and how far the page can scroll, measured once.
+     Reading offsetTop inside the scroll handler — after the two style writes
+     above it — forced a synchronous layout on every frame of every scroll.
+     None of these numbers change while scrolling; only layout changes them. */
+  var tops=[], maxY=1, revealAt=400, mq=false;
+  function measure(){
+    mq=false;
+    tops=secs.map(function(s){ return s.offsetTop; });
+    maxY=Math.max(1, document.body.scrollHeight-window.innerHeight);
+    revealAt=head ? head.offsetTop+head.offsetHeight-40 : 400;
+    upd();
+  }
+  /* the detail toggle opens every disclosure at once — one measure, not ten */
+  function remeasure(){ if(!mq){ mq=true; requestAnimationFrame(measure); } }
+
   function upd(){
     tick=false;
-    var y=window.scrollY, h=document.body.scrollHeight-window.innerHeight,
-        pct=h>0?Math.min(1,Math.max(0,y/h)):0;
+    var y=window.scrollY, pct=Math.min(1,Math.max(0,y/maxY));
     fill.style.height=(pct*100)+"%";
     mprog.style.width=(pct*100)+"%";
-    var revealAt=head?head.offsetTop+head.offsetHeight-40:400;
     mnav.classList.toggle("show", y>revealAt);
     var i=-1, probe=y+Math.min(250,window.innerHeight*0.33);
-    for(var k=0;k<secs.length;k++){ if(secs[k].offsetTop<=probe) i=k; }
+    for(var k=0;k<tops.length;k++){ if(tops[k]<=probe) i=k; }
     items.forEach(function(el,j){ el.classList.toggle("on",j===i); });
     chips.forEach(function(el,j){ el.classList.toggle("on",j===i); });
   }
   window.addEventListener("scroll",function(){ if(!tick){ tick=true; requestAnimationFrame(upd); } },{passive:true});
-  window.addEventListener("resize",upd);
-  upd();
+  window.addEventListener("resize",remeasure);
+  window.addEventListener("load",remeasure);
+  /* a disclosure opening or the detail toggle moves every section below it.
+     `toggle` does not bubble, so this listens on the capture phase. */
+  document.addEventListener("toggle",remeasure,true);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
+  measure();
 })();
 
 /* ─────────── GATE ───────────
@@ -2201,14 +2435,19 @@ var BUST=(function(){
     if(!cur || sheet()) return;
     var r=cur.getBoundingClientRect(),
         cw=card.offsetWidth, ch=card.offsetHeight,
-        vw=window.innerWidth, vh=window.innerHeight, GAP=11, PAD=12;
+        /* clientWidth, not innerWidth: the scrollbar is not room to sit in */
+        vw=document.documentElement.clientWidth, vh=window.innerHeight, GAP=11, PAD=12;
     var side = (r.bottom+GAP+ch <= vh-8) ? "below"
              : ((r.top-GAP-ch >= 8) ? "above" : (r.top > vh-r.bottom ? "above" : "below"));
     var top = side==="below" ? r.bottom+GAP : r.top-GAP-ch;
     top=Math.max(8,Math.min(top,vh-ch-8));
     var ax=r.left+Math.min(r.width/2,90);
     var left=Math.round(ax-Math.min(cw*0.3,104));
-    left=Math.max(PAD,Math.min(left,vw-cw-PAD));
+    /* the machine owns the right edge of the screen — the card stops at its
+       hairline rather than parking itself on top of the print */
+    var bay=document.getElementById("bay");
+    var bayW=(bay && getComputedStyle(bay).display!=="none") ? bay.offsetWidth : 0;
+    left=Math.max(PAD,Math.min(left,vw-bayW-cw-PAD));
     card.style.top=Math.round(top)+"px";
     card.style.left=left+"px";
     card.setAttribute("data-side",side);
@@ -2395,6 +2634,669 @@ var BUST=(function(){
   }
 })();
 })();
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three":         "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.min.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+/* ═══════════════════════════════════════════════════════════════════════
+   THE MACHINE  ·  one print job, paced by the scrollbar
+
+   Two files: the machine (3DPrinter.glb) and the thing it is printing
+   (head.glb, a real scanned head — see meltHead below).
+
+   The machine is a single merged mesh — no rigged lid, no rigged plate — so
+   the parts that have to move are found rather than named:
+     · the hood is its own primitive, because it carries its own material
+       (KHR_materials_transmission, a tinted hood you can see the job through);
+     · the plate and its carriage are recovered by welding coincident
+       vertices, flood-filling the index buffer, and keeping the islands that
+       live entirely between y 0.33 and 0.47. The Z tower spans y 0.15→0.52
+       and so is never caught by that net, which is the whole reason the test
+       is written on the island's extent rather than on a box around it.
+
+   Every number below was measured off the file, not guessed. Model units:
+   the machine is 0.52 tall and stands ~400 mm in life, so 1 unit ≈ 769 mm.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const bay = document.getElementById("bay");
+const MQ  = window.matchMedia("(min-width:1180px)");
+const RM  = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+/* The machine wears four 1024 maps repacked out of the 2048 PNGs it shipped
+   with — 7.25 MB down to 0.67 MB, drawn into a panel 440 px wide, where the
+   difference measures 43 dB and shows only along the decal's own edges.
+   Regenerate with:  python3 tools/repack-glb.py 3dprinter/source/3DPrinter.glb */
+const PRINTER_GLB = "3dprinter/source/3DPrinter.min.glb";
+const HEAD_GLB    = "head.min.glb";
+const DEBUG = /[?&]bay=debug\b/.test(location.search);
+
+/* ── measured off 3DPrinter.glb ── */
+const RESIN_Y = 0.1885;   // liquid surface, just under the vat rim at 0.198
+const PLATE_Y = 0.343;    // underside of the build plate, parked
+const PLATE_X = -0.0475;  // the plate and the vat share this centre
+const CAR_LO  = 0.33, CAR_HI = 0.47;   // the carriage island lives in this band
+const VAT_W   = 0.158, VAT_D = 0.288;  // liquid area, inset from the vat walls
+const H_BUST  = 0.16;     // 123 mm of face — the memo's object, near enough
+const DOWN    = RESIN_Y - PLATE_Y;     // plate travel down to the liquid
+const LIFT    = 0.182;    // and back up, far enough to clear the whole bust
+const LAYERS  = 88;       // flashes across the print. The real machine cuts 2600.
+const FACE_YAW = -0.13;   // the scan, turned far enough to meet the camera
+
+const $ = (id) => document.getElementById(id);
+const clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
+const ease    = (t) => t * t * (3 - 2 * t);
+
+if (bay) {
+  if (MQ.matches) start();
+  else MQ.addEventListener("change", function once(e) {
+    if (e.matches) { MQ.removeEventListener("change", once); start(); }
+  });
+}
+
+async function start() {
+  /* The models come off this origin and the library off a CDN, so the two
+     downloads do not contend. Start the bytes moving now rather than after the
+     import settles: both files are self-contained .glb, so what arrives can be
+     handed straight to GLTFLoader.parse and never asked for twice. */
+  const bytes = Promise.all(
+    [PRINTER_GLB, HEAD_GLB].map((u) =>
+      fetch(u).then((r) => {
+        if (!r.ok) throw new Error(u + ": http " + r.status);
+        return r.arrayBuffer();
+      }))
+  );
+
+  let THREE, GLTFLoader, RoomEnvironment;
+  try {
+    const [t, g, r] = await Promise.all([
+      import("three"),
+      import("three/addons/loaders/GLTFLoader.js"),
+      import("three/addons/environments/RoomEnvironment.js")
+    ]);
+    THREE = t;
+    GLTFLoader = g.GLTFLoader;
+    RoomEnvironment = r.RoomEnvironment;
+  } catch (err) {
+    return fail("Three.js could not be reached.", err);
+  }
+
+  const canvas = $("bayCanvas"), stage = canvas.parentNode;
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  } catch (err) {
+    return fail("This browser has no WebGL.", err);
+  }
+
+  renderer.setClearAlpha(0);
+  renderer.localClippingEnabled = true;          // the liquid line needs it
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 20);
+  const AIM    = new THREE.Vector3(0, 0.265, 0);
+  const EYE    = new THREE.Vector3(-0.93, 0.53, 0.66);   // three-quarter, off the front
+  const DIST   = EYE.distanceTo(AIM);
+
+  /* RoomEnvironment does the work a studio would: it is what makes injection
+     moulding read as plastic and the hood read as tinted glass. */
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+  const key     = new THREE.DirectionalLight(0xffffff, 2.1);
+  key.position.set(-0.85, 1.15, 0.75);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.bias = -0.0008;
+  key.shadow.normalBias = 0.004;
+  const sc = key.shadow.camera;
+  sc.near = 0.05; sc.far = 3.2;
+  sc.left = -0.42; sc.right = 0.42; sc.top = 0.62; sc.bottom = -0.22;
+  sc.updateProjectionMatrix();
+  scene.add(ambient, key);
+
+  /* the machine stands on the page, so it needs something to cast onto */
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.6, 1.6),
+    new THREE.ShadowMaterial({ opacity: 0.24 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -0.0172;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const root = new THREE.Group();
+  scene.add(root);
+
+  /* ── the liquid, and the light under it ───────────────────────────────
+     The resin sheet sits a hair above the clipping height, so it covers the
+     open cross-section the clip leaves behind. That is why the bust needs no
+     cap geometry: the thing hiding the cut is the thing doing the cutting. */
+  const resin = new THREE.Mesh(
+    new THREE.PlaneGeometry(VAT_W, VAT_D),
+    new THREE.MeshPhysicalMaterial({
+      color: 0x17122b, roughness: 0.05, metalness: 0,
+      clearcoat: 1, clearcoatRoughness: 0.04,
+      transparent: true, opacity: 0.96, side: THREE.DoubleSide
+    })
+  );
+  resin.rotation.x = -Math.PI / 2;
+  resin.position.set(PLATE_X, RESIN_Y + 0.0007, 0);
+  root.add(resin);
+
+  const glowTex = (() => {
+    const c = document.createElement("canvas"); c.width = c.height = 128;
+    const g = c.getContext("2d").createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, "rgba(139,107,255,1)");
+    g.addColorStop(0.45, "rgba(107,80,220,.42)");
+    g.addColorStop(1, "rgba(91,63,209,0)");
+    const x = c.getContext("2d"); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  })();
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(VAT_W * 1.5, VAT_D * 1.1),
+    new THREE.MeshBasicMaterial({
+      map: glowTex, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    })
+  );
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.set(PLATE_X, RESIN_Y + 0.0016, 0);
+  root.add(glow);
+
+  /* ── the object on the plate ──────────────────────────────────────────
+     A scanned head (head.glb), hung crown-first: the end welded to the plate
+     is the end a resin machine builds first, and the face is drawn out of the
+     liquid forehead down.
+
+     Nothing steps the surface into layers, deliberately. Snapping vertex Y to
+     the layer pitch was tried and thrown out twice over: 0.05 mm of layer is
+     finer than a pixel at this size, and answer 03 spends a paragraph arguing
+     that resin's case over filament is precisely that it leaves no ridge
+     across a cheek. Drawing ridges here would call the memo a liar. The layer
+     story is carried by the cure line, the flash and the counter instead. */
+  const clip = new THREE.Plane(new THREE.Vector3(0, 1, 0), -RESIN_Y);
+  const bustMat = new THREE.MeshPhysicalMaterial({
+    color: 0xb9b4c8, roughness: 0.34, metalness: 0,
+    clearcoat: 0.7, clearcoatRoughness: 0.28,
+    sheen: 0.35, sheenColor: new THREE.Color(0x8b6bff),
+    side: THREE.DoubleSide,
+    clippingPlanes: [clip], clipShadows: true
+  });
+
+  /* geometry arrives with the scan; everything downstream can hold the mesh */
+  const bust = new THREE.Mesh(new THREE.BufferGeometry(), bustMat);
+  bust.position.set(PLATE_X, PLATE_Y, 0);   // crown welded to the plate
+  bust.scale.setScalar(H_BUST);             // the scan is melted to unit height
+  bust.castShadow = true;
+  bust.visible = false;
+
+  /* the cure line: a ribbon hugging the slice being flashed right now, traced
+     off a table of the scan's own widest reach at each height and bearing —
+     all a ring of light needs to know about a face. */
+  const RIB = 72, CUTS = 192;
+  let silh = null;
+  const ribGeo = new THREE.BufferGeometry();
+  ribGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array((RIB + 1) * 2 * 3), 3));
+  {
+    const idx = [];
+    for (let k = 0; k < RIB; k++) {
+      const a = k * 2, b = a + 1, c = a + 2, d = a + 3;
+      idx.push(a, c, b, b, c, d);
+    }
+    ribGeo.setIndex(idx);
+  }
+  const rib = new THREE.Mesh(ribGeo, new THREE.MeshBasicMaterial({
+    color: 0x8b6bff, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+  }));
+  rib.frustumCulled = false;
+  root.add(rib);
+
+  function traceCureLine(v) {
+    if (!silh) return;
+    const p = ribGeo.attributes.position;
+    const f = clamp01(v) * (CUTS - 1), i = Math.floor(f), t = f - i;
+    const r0 = i * RIB, r1 = Math.min(CUTS - 1, i + 1) * RIB;
+    for (let k = 0; k <= RIB; k++) {
+      const b = k % RIB, th = (k / RIB) * Math.PI * 2;
+      const r = (silh[r0 + b] + (silh[r1 + b] - silh[r0 + b]) * t) * H_BUST;
+      const x = Math.cos(th) * r, z = Math.sin(th) * r;
+      p.setXYZ(k * 2, PLATE_X + x * 0.99, RESIN_Y + 0.0022, z * 0.99);
+      p.setXYZ(k * 2 + 1, PLATE_X + x * 1.22, RESIN_Y + 0.0022, z * 1.22);
+    }
+    p.needsUpdate = true;
+  }
+
+  /* ── load, and take the machine apart ─────────────────────────────── */
+  let cap = null, capFade = [], carriage = null;
+
+  const loader = new GLTFLoader();
+  const parse = (buf) => new Promise((res, rej) => loader.parse(buf, "", res, rej));
+
+  bytes.then((bufs) => Promise.all(bufs.map(parse))).then(([gltf, head]) => {
+    if (DEBUG) {
+      const names = [];
+      gltf.scene.traverse((o) => {
+        if (o.isMesh || o.isGroup) {
+          names.push(`${o.type.padEnd(6)} ${o.name || "(unnamed)"}` +
+            (o.material ? `  ·  mat: ${o.material.name || "?"}` : ""));
+        }
+      });
+      console.groupCollapsed("%c3DPrinter.glb · hierarchy", "color:#5B3FD1;font-weight:600");
+      names.forEach((n) => console.log(n));
+    }
+
+    /* the hood carries its own material, so it is the one part named for us */
+    const parts = [];
+    gltf.scene.traverse((o) => { if (o.isMesh) parts.push(o); });
+    const body = parts.find((m) => /_Cap$|_Text$/.test(m.material.name || "") === false);
+    cap = parts.find((m) => /_Cap$/.test(m.material.name || ""));
+    const logo = parts.find((m) => /_Text$/.test(m.material.name || ""));
+
+    if (!body || !cap) {
+      if (DEBUG) console.groupEnd();
+      return fail("Unexpected model layout.", null);
+    }
+
+    parts.forEach((m) => { m.castShadow = true; m.receiveShadow = true; });
+
+    /* hood and badge fade as one — a wordmark left hanging in mid-air after
+       the shell it is printed on has gone is worse than either */
+    cap.material.transparent = true;
+    capFade.push([cap.material, cap.material.opacity]);
+    if (logo) {
+      cap.add(logo);                   // the badge is printed on the hood
+      logo.material.transparent = true;
+      capFade.push([logo.material, logo.material.opacity]);
+    }
+
+    /* flood-fill the body and lift out the carriage */
+    const moved = extractCarriage(THREE, body.geometry, CAR_LO, CAR_HI);
+
+    /* and the thing it is printing */
+    const scan = meltHead(THREE, head.scene, FACE_YAW, CUTS, RIB);
+    bust.geometry = scan.geometry;
+    silh = scan.silhouette;
+
+    if (DEBUG) {
+      console.log(`carriage: ${moved.tris} of ${moved.total} triangles ` +
+                  `(y ${moved.y0.toFixed(3)}→${moved.y1.toFixed(3)})`);
+      console.log(`head: ${scan.tris.toLocaleString("en-IN")} triangles in ` +
+                  `${scan.parts} chunks · ${(scan.w * 130).toFixed(0)}×${(scan.d * 130).toFixed(0)} mm ` +
+                  `at 130 mm tall`);
+      console.groupEnd();
+    }
+
+    if (!moved.geometry) return fail("Build plate not found in the mesh.", null);
+
+    carriage = new THREE.Group();
+    const plate = new THREE.Mesh(moved.geometry, body.material);
+    plate.castShadow = true; plate.receiveShadow = true;
+    carriage.add(plate, bust);
+    body.parent.add(carriage);
+
+    root.add(gltf.scene);
+    $("bayNote").textContent = RM.matches ? "" : "Scroll — the job runs as you read";
+    resize();
+    wire();
+  }).catch((err) => fail("The model could not be loaded.", err));
+
+  /* ── choreography ─────────────────────────────────────────────────── */
+  const drive = { p: RM.matches ? 0.86 : 0 };   // still motion gets a made print
+  let flash = 0, lastLayer = -1, mx = 0, my = 0, tmx = 0, tmy = 0, raf = 0;
+  let settled = false;
+
+  const cards = [].slice.call(document.querySelectorAll(".bay-card"));
+  const stEl = $("bayState"), stT = $("bayStateT"), note = $("bayNote");
+  const telL = $("telLayer"), telZ = $("telZ"), telP = $("telPct"), telB = $("telBar");
+  let lastCard = -1, lastState = "", lastPct = -1, noteGone = false;
+
+  function apply(p) {
+    /* 0 → 0.35 · the hood comes off while the plate homes to the liquid */
+    const eo = ease(clamp01((p - 0.06) / 0.29));
+    cap.position.y = 0.30 * eo;
+    cap.rotation.z = -0.085 * eo;
+    /* it has to actually leave. Held at 45 % it just parked above the frame
+       line, a grey slab across the top of the bay for the rest of the memo. */
+    cap.visible = eo < 1;
+    for (let i = 0; i < capFade.length; i++)
+      capFade[i][0].opacity = capFade[i][1] * (1 - eo);
+
+    const settle = ease(clamp01((p - 0.12) / 0.23));
+    /* 0.35 → 1 · the print. No easing: a stepper motor does not accelerate. */
+    const run = clamp01((p - 0.35) / 0.65);
+    carriage.position.y = DOWN * settle + LIFT * run;
+
+    const cut = clamp01((LIFT * run) / H_BUST);   // how much face is above the liquid
+    bust.visible = p >= 0.35;
+    const curing = bust.visible && cut < 1;
+
+    if (curing) {
+      const li = Math.floor(cut * LAYERS);
+      if (li !== lastLayer) { lastLayer = li; flash = 1; }
+      traceCureLine(cut);
+    }
+    rib.visible = curing;
+    rib.material.opacity = curing ? 0.34 + 0.5 * flash : 0;
+    glow.material.opacity = curing ? 0.30 + 0.45 * flash : 0;
+    resin.material.emissive.setRGB(0.16 * flash, 0.10 * flash, 0.42 * flash);
+
+    root.rotation.y = -0.22 + 0.5 * p + mx * 0.13;
+
+    /* ── readouts, only when a number actually changed ── */
+    const pct = Math.round(cut * 100);
+    if (pct !== lastPct) {
+      lastPct = pct;
+      telL.textContent = Math.round(cut * 2600).toLocaleString("en-IN");
+      telZ.textContent = (cut * 130).toFixed(1);
+      telP.textContent = pct;
+      telB.style.width = pct + "%";
+    }
+
+    const state = p < 0.12 ? "Idle" : p < 0.35 ? "Homing" : cut < 1 ? "Curing" : "Complete";
+    if (state !== lastState) {
+      lastState = state;
+      stT.textContent = state;
+      stEl.className = "bay-st" + (state === "Curing" ? " live" : state === "Complete" ? " done" : "");
+    }
+    const ci = p < 0.20 ? 0 : p < 0.50 ? 1 : 2;
+    if (ci !== lastCard) {
+      lastCard = ci;
+      cards.forEach((c, i) => c.classList.toggle("on", i === ci));
+    }
+    if (p > 0.10 && !noteGone) { noteGone = true; note.textContent = ""; }
+  }
+
+  /* ── the scrub ────────────────────────────────────────────────────────
+     The job is paced by one number: how far down the memo the reader is,
+     between the top of the page and the moment #test reaches the middle of
+     the screen. GSAP's ScrollTrigger did this and cost 110 KB across four
+     modules to do it; what it was actually doing is the two lines below —
+     a target read off the scrollbar, and an exponential chase toward it.
+
+     CATCHUP is how long the machine takes to arrive once the reader stops,
+     the same 0.7 s GSAP's scrub:0.7 meant. Note that scrub's number is a
+     duration, not a time constant: feeding 0.7 straight into the exponential
+     below makes it close only 2 % of the gap per frame, and the print trails
+     the scrollbar by ten seconds. Four time constants gets 98 % of the way. */
+  const CATCHUP = 0.7;
+  const TAU = CATCHUP / 4;
+  let target = drive.p, endY = 1;
+
+  function measure() {
+    const test = document.getElementById("test");
+    /* "top center": the run ends when #test's top hits the middle of the
+       viewport. pageYOffset + rect.top is its document position, read once
+       here and again only when the layout can have changed. */
+    const y = test ? test.getBoundingClientRect().top + window.scrollY : 0;
+    endY = Math.max(1, y - window.innerHeight / 2);
+  }
+
+  function wire() {
+    if (RM.matches) { apply(drive.p); render(); return; }
+
+    measure();
+    window.addEventListener("resize", measure, { passive: true });
+    window.addEventListener("load", measure);
+    /* opening a disclosure moves #test down the page */
+    document.addEventListener("toggle", measure, true);
+
+    window.addEventListener("scroll", () => {
+      target = clamp01(window.scrollY / endY);
+    }, { passive: true });
+    target = clamp01(window.scrollY / endY);
+
+    window.addEventListener("pointermove", (e) => {
+      tmx = (e.clientX / window.innerWidth) * 2 - 1;
+      tmy = (e.clientY / window.innerHeight) * 2 - 1;
+    }, { passive: true });
+
+    let last = performance.now();
+    (function loop(now) {
+      raf = requestAnimationFrame(loop);
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (document.hidden) return;
+
+      /* frame-rate independent chase: the same easing at 60 and 144 Hz */
+      drive.p += (target - drive.p) * (1 - Math.exp(-dt / TAU));
+      /* 5e-4 of the run is a fifth of one of the 2,600 layers — close enough
+         to call arrived, and it lets the loop stop instead of creeping */
+      if (Math.abs(target - drive.p) < 5e-4) drive.p = target;
+
+      flash = Math.max(0, flash - dt * 5.5);
+      mx += (tmx - mx) * Math.min(1, dt * 4);
+      my += (tmy - my) * Math.min(1, dt * 4);
+
+      /* Once the print has caught up with the scrollbar, the mouse has stopped
+         and the last flash has faded, every frame after draws the same pixels.
+         Stop drawing them: the panel is decorative and the reader is reading. */
+      const still = drive.p === target && flash === 0 &&
+                    Math.abs(tmx - mx) < 1e-3 && Math.abs(tmy - my) < 1e-3;
+      if (still && settled) return;
+      settled = still;
+
+      apply(drive.p);
+      render();
+    })(last);
+  }
+
+  function render() {
+    /* parallax rides the camera, never the model: a tilted machine would tilt
+       the liquid too, and the clipping plane is fixed in world space */
+    camera.position.set(
+      EYE.x + mx * 0.10,
+      EYE.y - my * 0.07,
+      EYE.z + mx * 0.055
+    );
+    camera.lookAt(AIM);
+    renderer.render(scene, camera);
+  }
+
+  function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    /* The bay is a tall slot — aspect runs about 0.46 — so width is what
+       actually binds, not height. Fitting by height alone cropped the machine
+       side to side. Take whichever constraint is tighter, then a little slack
+       for the near corner, which perspective makes bigger than the centre. */
+    const FIT_H = 0.56, FIT_W = 0.38;
+    const want = Math.max(FIT_H, FIT_W / camera.aspect) * 1.22;
+    camera.fov = 2 * Math.atan((want / 2) / DIST) * 180 / Math.PI;
+    camera.updateProjectionMatrix();
+    if (RM.matches) render();
+  }
+
+  new ResizeObserver(resize).observe(stage);
+  window.addEventListener("resize", resize, { passive: true });
+
+  /* the page can switch to darkroom under us; the machine follows */
+  const syncTheme = () => {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    ambient.intensity = dark ? 0.34 : 0.55;
+    key.intensity = dark ? 1.5 : 2.1;
+    renderer.toneMappingExposure = dark ? 0.92 : 1.05;
+    floor.material.opacity = dark ? 0.4 : 0.24;
+    bustMat.color.set(dark ? 0x9d97ad : 0xb9b4c8);
+    if (RM.matches) render();
+  };
+  new MutationObserver(syncTheme).observe(document.documentElement,
+    { attributes: true, attributeFilter: ["data-theme"] });
+  syncTheme();
+
+  canvas.addEventListener("webglcontextlost", (e) => {
+    e.preventDefault(); cancelAnimationFrame(raf);
+    fail("The graphics context was lost.", null);
+  });
+}
+
+/* ── recover the moving parts from a mesh nobody rigged ────────────────
+   Weld coincident vertices first: the exporter splits them along UV seams,
+   and without the weld a single moulded arm arrives as a dozen islands. */
+function extractCarriage(THREE, geo, lo, hi) {
+  const pos = geo.attributes.position, idx = geo.index;
+  const n = pos.count, parent = new Int32Array(n);
+  for (let i = 0; i < n; i++) parent[i] = i;
+  const find = (i) => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+  const uni = (a, b) => { a = find(a); b = find(b); if (a !== b) parent[b] = a; };
+
+  const seen = new Map();
+  for (let i = 0; i < n; i++) {
+    const k = Math.round(pos.getX(i) * 1e5) + "," +
+              Math.round(pos.getY(i) * 1e5) + "," +
+              Math.round(pos.getZ(i) * 1e5);
+    const j = seen.get(k);
+    if (j === undefined) seen.set(k, i); else uni(j, i);
+  }
+  for (let t = 0; t < idx.count; t += 3) {
+    uni(idx.getX(t), idx.getX(t + 1)); uni(idx.getX(t + 1), idx.getX(t + 2));
+  }
+
+  const box = new Map();
+  for (let i = 0; i < n; i++) {
+    const r = find(i), y = pos.getY(i);
+    const e = box.get(r);
+    if (!e) box.set(r, { y0: y, y1: y });
+    else { if (y < e.y0) e.y0 = y; if (y > e.y1) e.y1 = y; }
+  }
+  /* an island counts as carriage only if it lies WHOLLY inside the band —
+     the Z tower reaches from 0.15 to 0.52 and is excluded by its own length */
+  const moving = new Set();
+  let y0 = Infinity, y1 = -Infinity;
+  box.forEach((e, r) => {
+    if (e.y0 >= lo && e.y1 <= hi) { moving.add(r); y0 = Math.min(y0, e.y0); y1 = Math.max(y1, e.y1); }
+  });
+  if (!moving.size) return { geometry: null, tris: 0, total: idx.count / 3, y0: 0, y1: 0 };
+
+  const stay = [], go = [];
+  for (let t = 0; t < idx.count; t += 3) {
+    const a = idx.getX(t), b = idx.getX(t + 1), c = idx.getX(t + 2);
+    (moving.has(find(a)) ? go : stay).push(a, b, c);
+  }
+  const lifted = geo.clone();
+  lifted.setIndex(go);
+  geo.setIndex(stay);
+  return { geometry: lifted, tris: go.length / 3, total: idx.count / 3, y0, y1 };
+}
+
+/* ── melt the scan into one printable object ───────────────────────────
+   The head arrives as nine chunks of 65k vertices — the exporter's ceiling,
+   not a division of the anatomy — so the work here is to bake each chunk's
+   world transform into one buffer, stand the result on unit height with its
+   crown at y = 0 (the face of the plate), and turn it to meet the camera.
+
+   The silhouette table falls out of the same pass: the widest reach of the
+   scan at each height and bearing. It costs one extra compare per vertex and
+   saves the cure line from having to intersect 800,000 triangles a frame. */
+function meltHead(THREE, scene, yaw, cuts, bearings) {
+  scene.updateMatrixWorld(true);
+  const src = [];
+  scene.traverse((o) => { if (o.isMesh && o.geometry.attributes.position) src.push(o); });
+
+  let nv = 0, ni = 0;
+  for (const m of src) {
+    const c = m.geometry.attributes.position.count;
+    nv += c;
+    ni += m.geometry.index ? m.geometry.index.count : c;
+  }
+
+  const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3);
+  const idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+  const v = new THREE.Vector3(), nm = new THREE.Matrix3();
+  let vo = 0, io = 0;
+
+  for (const m of src) {
+    const gp = m.geometry.attributes.position, gn = m.geometry.attributes.normal;
+    const gi = m.geometry.index;
+    nm.getNormalMatrix(m.matrixWorld);
+    for (let i = 0; i < gp.count; i++) {
+      v.fromBufferAttribute(gp, i).applyMatrix4(m.matrixWorld).toArray(pos, (vo + i) * 3);
+      if (gn) v.fromBufferAttribute(gn, i).applyMatrix3(nm).normalize().toArray(nor, (vo + i) * 3);
+    }
+    if (gi) for (let i = 0; i < gi.count; i++) idx[io + i] = gi.getX(i) + vo;
+    else    for (let i = 0; i < gp.count; i++) idx[io + i] = vo + i;
+    vo += gp.count;
+    io += gi ? gi.count : gp.count;
+  }
+
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < nv * 3; i++) {
+    const k = i % 3, a = pos[i];
+    if (a < lo[k]) lo[k] = a;
+    if (a > hi[k]) hi[k] = a;
+  }
+
+  const s = 1 / (hi[1] - lo[1]);                    // crown to cut, called 1
+  const cx = (lo[0] + hi[0]) / 2, cz = (lo[2] + hi[2]) / 2;
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const silh = new Float32Array(cuts * bearings), TAU = Math.PI * 2;
+
+  for (let i = 0; i < nv; i++) {
+    const x = (pos[i * 3] - cx) * s, y = (pos[i * 3 + 1] - hi[1]) * s, z = (pos[i * 3 + 2] - cz) * s;
+    const rx = x * cy + z * sy, rz = z * cy - x * sy;
+    pos[i * 3] = rx; pos[i * 3 + 1] = y; pos[i * 3 + 2] = rz;
+    const nx = nor[i * 3], nz = nor[i * 3 + 2];
+    nor[i * 3] = nx * cy + nz * sy; nor[i * 3 + 2] = nz * cy - nx * sy;
+
+    let c = (-y * cuts) | 0;                        // 0 at the crown, downward
+    if (c < 0) c = 0; else if (c >= cuts) c = cuts - 1;
+    let b = ((Math.atan2(rz, rx) + TAU) % TAU) / TAU * bearings | 0;
+    if (b >= bearings) b = 0;
+    const r = Math.sqrt(rx * rx + rz * rz), k = c * bearings + b;
+    if (r > silh[k]) silh[k] = r;
+  }
+
+  /* near the crown a ring can ask for more bearings than the scan has points
+     to answer with. Bridge the gaps rather than let the ribbon fall to the
+     axis and kink; a ring with nothing at all borrows the one above it. */
+  for (let c = 0; c < cuts; c++) {
+    const row = c * bearings;
+    let any = false;
+    for (let b = 0; b < bearings && !any; b++) any = silh[row + b] > 0;
+    if (!any) { if (c) silh.copyWithin(row, row - bearings, row); continue; }
+    for (let b = 0; b < bearings; b++) {
+      if (silh[row + b] > 0) continue;
+      let back = 1, fwd = 1;
+      while (silh[row + (b - back + bearings * 2) % bearings] === 0) back++;
+      while (silh[row + (b + fwd) % bearings] === 0) fwd++;
+      const a = silh[row + (b - back + bearings * 2) % bearings];
+      const d = silh[row + (b + fwd) % bearings];
+      silh[row + b] = a + (d - a) * (back / (back + fwd));
+    }
+  }
+
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
+  g.setIndex(new THREE.BufferAttribute(idx, 1));
+  g.computeBoundingSphere();
+
+  return { geometry: g, silhouette: silh, tris: ni / 3, parts: src.length,
+           w: (hi[0] - lo[0]) * s, d: (hi[2] - lo[2]) * s };
+}
+
+function fail(msg, err) {
+  if (err) console.warn("[bay]", msg, err);
+  const n = document.getElementById("bayNote");
+  if (n) n.textContent = msg;
+  const s = document.getElementById("bayState");
+  if (s) { s.className = "bay-st"; document.getElementById("bayStateT").textContent = "Offline"; }
+}
 </script>
 </body>
 </html>
