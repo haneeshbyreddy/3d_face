@@ -1,0 +1,15 @@
+# Build inputs and dev tooling. The site is index.html plus the two .min.glb
+# files; both of those are self-contained, so nothing below is fetched at
+# runtime. Kept in the repo so the models can be regenerated.
+
+# Raw scan -> tools/prepare-scan.mjs -> head.min.glb
+head.glb
+
+# Asset-store original -> tools/repack-glb.py -> 3DPrinter.min.glb
+3dprinter/source/3DPrinter.glb
+
+# Loose copies of the maps already embedded in 3DPrinter.glb
+3dprinter/textures/
+
+tools/
+.claude/
