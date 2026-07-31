@@ -738,7 +738,7 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
 .gate-do{margin:1.3rem 0 0;border-top:1px solid var(--line);padding-top:1.15rem;display:grid;gap:.8rem}
 .gate-do div{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;
   font-size:0.895rem;line-height:1.55;color:var(--muted)}
-.gate-do b{display:block;color:var(--ink);font-weight:600;font-size:0.925rem}
+.gate-do b{color:var(--ink);font-weight:600;margin-right:.4rem}
 .gate-do i{width:9px;height:9px;flex:0 0 9px;background:var(--uv);translate:0 .42rem}
 .gate-do div+div i{background:var(--grey-2)}
 .gate-f{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;
@@ -764,7 +764,6 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
 }
 @media(max-height:700px){
   .gate-fig{display:none}
-  .gate-do div+div{display:none}
 }
 
 @media(max-width:767px){
@@ -1484,7 +1483,7 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
 <!-- one-time coachmark, anchored to the marked word in the hero -->
 <aside class="glh" id="glHint" data-side="above" role="status">
   <span class="glh-notch"></span>
-  <p id="glHintTxt"><b>Hover this word.</b> Every word marked with a dotted rule and a small square opens a short definition and a picture.</p>
+  <p id="glHintTxt"><b>Hover this word.</b> Every marked word opens a definition and a picture.</p>
   <div class="glh-r">
     <span class="glh-k"><i></i>14 words</span>
     <button type="button" id="glHintX">Got it</button>
@@ -1531,7 +1530,7 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
         </svg>
 
         <h2 id="gateH">This memo is <em>drawn to scale</em>. It needs a wider screen.</h2>
-        <p class="gate-p">Four bust sizes at true relative scale, a logarithmic accuracy axis, a 72-hour clock. Any narrower and they mislead rather than show &mdash; so the page waits.</p>
+        <p class="gate-p">Any narrower and the charts mislead rather than show.</p>
 
         <div class="gate-m">
           <div class="gate-mt"><span>This screen</span><b class="num" id="gateW">&mdash;</b></div>
@@ -1540,8 +1539,8 @@ footer .flbl{font-family:var(--mono);font-size:0.72rem;letter-spacing:.17em;text
         </div>
 
         <div class="gate-do">
-          <div><i></i><span><b>On a phone</b>Open it on a laptop. One page, six minutes.</span></div>
-          <div><i></i><span><b>On a laptop</b>Widen the window &mdash; it appears the moment there is room.</span></div>
+          <div><i></i><span><b>On a phone</b>Open it on a laptop.</span></div>
+          <div><i></i><span><b>On a laptop</b>Widen the window.</span></div>
         </div>
       </div>
       <div class="gate-f">
@@ -2097,7 +2096,7 @@ var BUST=(function(){
   if(hintK) hintK.innerHTML='<i></i>'+total+' words';
   var hintTxt=document.getElementById("glHintTxt");
   if(hintTxt && !canHover())
-    hintTxt.innerHTML="<b>Tap this word.</b> Every word marked with a dotted rule and a small square opens a short definition and a picture.";
+    hintTxt.innerHTML="<b>Tap this word.</b> Every marked word opens a definition and a picture.";
 
   /* ── the printed glossary: hover does not survive paper ── */
   var ol=document.querySelector("#glPrint ol");
